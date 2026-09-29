@@ -9,6 +9,28 @@ interface PurchaseOrderPrintViewProps {
     printMode?: "po" | "delivery-receipt" | null;
 }
 
+/*
+|--------------------------------------------------------------------------
+| LOGOS
+|--------------------------------------------------------------------------
+| Replace these paths with the actual paths of your two logo files.
+|
+| Example:
+| public/images/cornerstone-logo.png
+| public/images/condymix-logo.png
+|
+| Then use:
+| /images/cornerstone-logo.png
+| /images/condymix-logo.png
+|--------------------------------------------------------------------------
+*/
+
+const CORNERSTONE_LOGO =
+    "/business-logo/cornerstone-logo.png";
+
+const CONDYMIX_LOGO =
+    "/business-logo/candymix-logo.jpg";
+
 const getStatusLabel = (
     status: PurchaseOrder["status"]
 ): string => {
@@ -124,25 +146,40 @@ export default function PurchaseOrderPrintView({
                         : "hidden"
                 }
             >
-                {/* Document Header */}
-                <header className="border-b-2 border-slate-900 pb-4">
-                    <div className="flex items-start justify-between gap-6">
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-wide text-slate-900">
-                                CORNERSTONE
-                            </h1>
+                {/* ===================================================== */}
+                {/* DOCUMENT HEADER */}
+                {/* ===================================================== */}
 
-                            <p className="mt-1 text-xs font-medium uppercase tracking-wider text-slate-600">
-                                Internal Inventory System
-                            </p>
+                <header className="border-b-2 border-slate-900 pb-4">
+                    <div className="flex items-center justify-between gap-6">
+                        {/* LOGOS */}
+                        <div className="flex items-center gap-3">
+                            <img
+                                src={CORNERSTONE_LOGO}
+                                alt="Cornerstone Multi Sales"
+                                className="h-12 w-auto object-contain"
+                            />
+
+                            <div className="h-9 w-px bg-slate-200" />
+
+                            <img
+                                src={CONDYMIX_LOGO}
+                                alt="Condymix"
+                                className="h-12 w-auto object-contain"
+                            />
                         </div>
 
+                        {/* DOCUMENT TITLE */}
                         <div className="text-right">
                             <h2 className="text-xl font-bold uppercase text-slate-900">
                                 Purchase Order Request
                             </h2>
 
-                            <p className="mt-1 font-mono text-sm font-semibold text-slate-700">
+                            <p className="mt-1 text-sm font-semibold text-slate-700">
+                                Reference PO
+                            </p>
+
+                            <p className="font-mono text-sm font-bold text-slate-900">
                                 {
                                     purchaseOrder.reference_number
                                 }
@@ -151,9 +188,14 @@ export default function PurchaseOrderPrintView({
                     </div>
                 </header>
 
-                {/* Document Information */}
+                {/* ===================================================== */}
+                {/* DOCUMENT INFORMATION */}
+                {/* ===================================================== */}
+
                 <section className="mt-5">
                     <div className="grid grid-cols-2 gap-x-10 gap-y-4 border border-slate-300 p-4">
+                        {/* STATUS */}
+
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                                 Status
@@ -166,6 +208,8 @@ export default function PurchaseOrderPrintView({
                             </p>
                         </div>
 
+                        {/* REQUESTED AT */}
+
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                                 Requested At
@@ -177,6 +221,8 @@ export default function PurchaseOrderPrintView({
                                 )}
                             </p>
                         </div>
+
+                        {/* REQUESTED BY */}
 
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
@@ -204,6 +250,8 @@ export default function PurchaseOrderPrintView({
                             )}
                         </div>
 
+                        {/* BRANCH */}
+
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                                 Branch
@@ -229,6 +277,8 @@ export default function PurchaseOrderPrintView({
                                 </p>
                             )}
                         </div>
+
+                        {/* WAREHOUSE */}
 
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
@@ -256,6 +306,8 @@ export default function PurchaseOrderPrintView({
                             )}
                         </div>
 
+                        {/* PRINTED DATE */}
+
                         <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                                 Printed Date
@@ -275,7 +327,10 @@ export default function PurchaseOrderPrintView({
                     </div>
                 </section>
 
-                {/* Requested Items */}
+                {/* ===================================================== */}
+                {/* REQUESTED ITEMS */}
+                {/* ===================================================== */}
+
                 <section className="mt-6">
                     <div className="mb-2 flex items-center justify-between">
                         <h3 className="text-sm font-bold uppercase tracking-wide text-slate-900">
@@ -372,7 +427,10 @@ export default function PurchaseOrderPrintView({
                     </table>
                 </section>
 
-                {/* Delivery Information */}
+                {/* ===================================================== */}
+                {/* DELIVERY INFORMATION */}
+                {/* ===================================================== */}
+
                 {(
                     purchaseOrder.delivery_type ||
                     purchaseOrder.ship_out_date ||
@@ -423,7 +481,10 @@ export default function PurchaseOrderPrintView({
                     </section>
                 )}
 
-                {/* Notes */}
+                {/* ===================================================== */}
+                {/* NOTES */}
+                {/* ===================================================== */}
+
                 <section className="mt-6">
                     <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-900">
                         Notes
@@ -444,7 +505,10 @@ export default function PurchaseOrderPrintView({
                     </div>
                 </section>
 
-                {/* Review Information */}
+                {/* ===================================================== */}
+                {/* REVIEW INFORMATION */}
+                {/* ===================================================== */}
+
                 {(purchaseOrder.approver ||
                     purchaseOrder.approved_at ||
                     purchaseOrder.rejection_reason) && (
@@ -512,7 +576,10 @@ export default function PurchaseOrderPrintView({
                     </section>
                 )}
 
-                {/* Proof of Delivery */}
+                {/* ===================================================== */}
+                {/* PROOF OF DELIVERY */}
+                {/* ===================================================== */}
+
                 {purchaseOrder.delivery_photo_url && (
                     <section className="mt-6">
                         <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-900">
@@ -534,9 +601,14 @@ export default function PurchaseOrderPrintView({
                     </section>
                 )}
 
-                {/* Signatures */}
+                {/* ===================================================== */}
+                {/* SIGNATURES */}
+                {/* ===================================================== */}
+
                 <section className="mt-10">
                     <div className="grid grid-cols-2 gap-16">
+                        {/* REQUESTED BY */}
+
                         <div>
                             <div className="h-10 border-b border-slate-500" />
 
@@ -553,6 +625,8 @@ export default function PurchaseOrderPrintView({
                                 }
                             </p>
                         </div>
+
+                        {/* APPROVED / REVIEWED BY */}
 
                         <div>
                             <div className="h-10 border-b border-slate-500" />
@@ -573,11 +647,15 @@ export default function PurchaseOrderPrintView({
                     </div>
                 </section>
 
-                {/* Footer */}
+                {/* ===================================================== */}
+                {/* FOOTER */}
+                {/* ===================================================== */}
+
                 <footer className="mt-8 border-t border-slate-300 pt-3">
                     <div className="flex items-center justify-between text-[10px] text-slate-500">
                         <p>
-                            Cornerstone Internal Inventory System
+                            Cornerstone Internal
+                            Inventory System
                         </p>
 
                         <p>
@@ -586,6 +664,10 @@ export default function PurchaseOrderPrintView({
                     </div>
                 </footer>
             </div>
+
+            {/* ========================================================= */}
+            {/* PRINT STYLES */}
+            {/* ========================================================= */}
 
             <style jsx global>{`
                 @media print {
@@ -633,6 +715,11 @@ export default function PurchaseOrderPrintView({
                     #purchase-order-print header,
                     #purchase-order-print footer {
                         break-inside: avoid;
+                    }
+
+                    #purchase-order-print img {
+                        print-color-adjust: exact;
+                        -webkit-print-color-adjust: exact;
                     }
                 }
             `}</style>

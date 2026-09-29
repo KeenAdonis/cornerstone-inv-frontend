@@ -105,18 +105,39 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                 {/* ===================================================== */}
 
                 <header className="border-b-2 border-slate-900 pb-4">
-                    <div className="flex items-start justify-between gap-6">
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-wide text-slate-900">
-                                CORNERSTONE
-                            </h1>
+                    <div className="flex items-center justify-between gap-6">
+                        {/* ================================================= */}
+                        {/* LOGOS */}
+                        {/* ================================================= */}
 
-                            <p className="mt-1 text-xs font-medium uppercase tracking-wider text-slate-600">
-                                Internal Inventory System
-                            </p>
+                        <div className="flex min-w-0 items-center gap-3">
+                            {/* Logo 1 */}
+                            <div className="flex h-14 w-auto shrink-0 items-center">
+                                <img
+                                    src="/business-logo/cornerstone-logo.png"
+                                    alt="Company Logo"
+                                    className="max-h-14 w-auto max-w-[150px] object-contain"
+                                />
+                            </div>
+
+                            {/* Divider */}
+                            <div className="h-10 w-px shrink-0 bg-slate-300" />
+
+                            {/* Logo 2 */}
+                            <div className="flex h-14 w-auto shrink-0 items-center">
+                                <img
+                                    src="/business-logo/candymix-logo.jpg"
+                                    alt="Company Logo"
+                                    className="max-h-14 w-auto max-w-[150px] object-contain"
+                                />
+                            </div>
                         </div>
 
-                        <div className="text-right">
+                        {/* ================================================= */}
+                        {/* DOCUMENT TITLE */}
+                        {/* ================================================= */}
+
+                        <div className="shrink-0 text-right">
                             <h2 className="text-xl font-bold uppercase text-slate-900">
                                 Delivery Receipt
                             </h2>
@@ -580,6 +601,15 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                     #delivery-receipt-print header,
                     #delivery-receipt-print footer {
                         break-inside: avoid;
+                    }
+
+                    /*
+                     * Keep logos visible when printing.
+                     */
+                    #delivery-receipt-print img {
+                        visibility: visible !important;
+                        print-color-adjust: exact;
+                        -webkit-print-color-adjust: exact;
                     }
                 }
             `}</style>

@@ -197,9 +197,17 @@ export default function ViewPurchaseOrderDialog({
     ] = useState<PrintMode>(null);
 
     useEffect(() => {
+        if (!printMode) {
+            return;
+        }
+
         const handleAfterPrint = () => {
             setPrintMode(null);
         };
+
+        const timer = window.setTimeout(() => {
+            window.print();
+        }, 150);
 
         window.addEventListener(
             "afterprint",
@@ -207,12 +215,14 @@ export default function ViewPurchaseOrderDialog({
         );
 
         return () => {
+            window.clearTimeout(timer);
+
             window.removeEventListener(
                 "afterprint",
                 handleAfterPrint
             );
         };
-    }, []);
+    }, [printMode]);
 
     if (!purchaseOrder) {
         return null;
@@ -249,18 +259,10 @@ export default function ViewPurchaseOrderDialog({
 
     const handlePrintPO = () => {
         setPrintMode("po");
-
-        setTimeout(() => {
-            window.print();
-        }, 100);
     };
-
+    
     const handlePrintDeliveryReceipt = () => {
         setPrintMode("delivery-receipt");
-
-        setTimeout(() => {
-            window.print();
-        }, 100);
     };
 
     return (
@@ -754,15 +756,19 @@ export default function ViewPurchaseOrderDialog({
             {/* PRINT VIEWS */}
             {/* ===================================================== */}
 
-            <PurchaseOrderPrintView
-                purchaseOrder={purchaseOrder}
-                printMode={printMode}
-            />
-
-            <PurchaseOrderDeliveryReceiptPrintView
-                purchaseOrder={purchaseOrder}
-                printMode={printMode}
-            />
+            {printMode === "po" && (
+                <PurchaseOrderPrintView
+                    purchaseOrder={purchaseOrder}
+                    printMode="po"
+                />
+            )}
+            
+            {printMode === "delivery-receipt" && (
+                <PurchaseOrderDeliveryReceiptPrintView
+                    purchaseOrder={purchaseOrder}
+                    printMode="delivery-receipt"
+                />
+            )}
         </>
     );
 }

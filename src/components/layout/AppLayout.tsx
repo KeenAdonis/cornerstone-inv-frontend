@@ -34,11 +34,15 @@ export default function AppLayout({
     const router = useRouter();
     const pathname = usePathname();
 
-    const [sidebarCollapsed, setSidebarCollapsed] =
-        useState(false);
+    const [
+        sidebarCollapsed,
+        setSidebarCollapsed,
+    ] = useState(false);
 
-    const [mobileSidebarOpen, setMobileSidebarOpen] =
-        useState(false);
+    const [
+        mobileSidebarOpen,
+        setMobileSidebarOpen,
+    ] = useState(false);
 
     const {
         user,
@@ -46,7 +50,9 @@ export default function AppLayout({
     } = useAuth();
 
     function handleSidebarToggle() {
-        setSidebarCollapsed((current) => !current);
+        setSidebarCollapsed(
+            (current) => !current
+        );
     }
 
     function handleMobileMenuOpen() {
@@ -78,7 +84,8 @@ export default function AppLayout({
             const dashboard =
                 navigationItems.find(
                     (item) =>
-                        item.label === "Dashboard"
+                        item.label ===
+                        "Dashboard"
                 );
 
             if (dashboard) {
@@ -127,39 +134,49 @@ export default function AppLayout({
     }
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50">
-            {/* Sidebar */}
-            <AppSidebar
-                collapsed={sidebarCollapsed}
-                onToggle={
-                    handleSidebarToggle
-                }
-                mobileOpen={
-                    mobileSidebarOpen
-                }
-                onMobileClose={
-                    handleMobileMenuClose
-                }
-            />
+        <ActiveLocationProvider
+            user={user}
+        >
+            <div className="flex h-screen overflow-hidden bg-slate-50">
+                {/* ================================================== */}
+                {/* SIDEBAR */}
+                {/* ================================================== */}
 
-            {/* Main Application Area */}
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                <ActiveLocationProvider
-                    user={user}
-                >
+                <AppSidebar
+                    collapsed={
+                        sidebarCollapsed
+                    }
+                    onToggle={
+                        handleSidebarToggle
+                    }
+                    mobileOpen={
+                        mobileSidebarOpen
+                    }
+                    onMobileClose={
+                        handleMobileMenuClose
+                    }
+                />
+
+                {/* ================================================== */}
+                {/* MAIN APPLICATION AREA */}
+                {/* ================================================== */}
+
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                     {/* Header */}
+
                     <AppHeader
-                        onMenuClick={
-                            handleMobileMenuOpen
-                        }
+                        collapsed={sidebarCollapsed}
+                        onToggle={handleSidebarToggle}
+                        onMenuClick={handleMobileMenuOpen}
                     />
 
                     {/* Scrollable Main Content */}
+
                     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                         {children}
                     </main>
-                </ActiveLocationProvider>
+                </div>
             </div>
-        </div>
+        </ActiveLocationProvider>
     );
 }

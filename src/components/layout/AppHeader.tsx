@@ -1,33 +1,41 @@
 "use client";
 
 import {
+    useEffect,
+    useRef,
+    useState,
+} from "react";
+
+import {
     LogOut,
     Menu,
-    MapPin,
+    PanelLeftClose,
+    PanelRightClose,
+    UserCircle,
 } from "lucide-react";
+
+import { usePathname } from "next/navigation";
+
+import {
+    getNavigationItems,
+} from "@/src/config/navigation";
 
 import { useAuth } from "@/src/hooks/useAuth";
 import { useLogout } from "@/src/hooks/useLogout";
 
-import {
-    useActiveLocationContext,
-} from "@/src/context/ActiveLocationContext";
-
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-
 interface AppHeaderProps {
+    collapsed: boolean;
+    onToggle: () => void;
     onMenuClick?: () => void;
 }
 
 export default function AppHeader({
+    collapsed,
+    onToggle,
     onMenuClick,
 }: AppHeaderProps) {
+    const pathname = usePathname();
+
     const { user } = useAuth();
 
     const {
@@ -36,222 +44,279 @@ export default function AppHeader({
         error: logoutError,
     } = useLogout();
 
-    const {
-        activeLocation,
-        setLocation,
-        initialized,
-    } = useActiveLocationContext();
+    const [userMenuOpen, setUserMenuOpen] =
+        useState(false);
 
-    const isBranchCoordinator =
-        user?.role ===
-        "branch_coordinator";
+    const userMenuRef =
+        useRef<HTMLDivElement | null>(null);
 
-    const isWarehouseCoordinator =
-        user?.role ===
-        "warehouse_coordinator";
+    /*
+     * ============================================================
+     * NAVIGATION
+     * ============================================================
+     */
 
-    const activeBranch =
-        isBranchCoordinator &&
-        activeLocation?.type === "branch"
-            ? user.assigned_branches.find(
-                  (branch) =>
-                      branch.id ===
-                      activeLocation.id
-              )
-            : null;
+    const navigationItems = user
+        ? getNavigationItems(user.role)
+        : [];
 
-    const activeWarehouse =
-        isWarehouseCoordinator &&
-        activeLocation?.type ===
-            "warehouse"
-            ? user.assigned_warehouses.find(
-                  (warehouse) =>
-                      warehouse.id ===
-                      activeLocation.id
-              )
-            : null;
+    const activeNavigationItem =
+        navigationItems.find(
+            (item) =>
+                pathname === item.href ||
+                pathname.startsWith(
+                    `${item.href}/`
+                )
+        );
 
-    const activeLocationValue =
-        activeLocation
-            ? `${activeLocation.type}:${activeLocation.id}`
-            : "";
+    const activeNavigationLabel =
+        activeNavigationItem?.label ??
+        "Dashboard";
 
-    function handleLocationChange(
-        value: string | null
-    ) {
-        if (!value) {
-            return;
-        }
+    /*
+     * ============================================================
+     * USER ROLE LABEL
+     * ============================================================
+     */
 
-        const [
-            type,
-            id,
-        ] = value.split(":");
+    const getRoleLabel = (
+        role: string
+    ): string => {
+        const roleLabels: Record<
+            string,
+            string
+        > = {
+            admin: "Administrator",
+            branch_coordinator:
+                "Branch Coordinator",
+            warehouse_coordinator:
+                "Warehouse Coordinator",
+            superadmin:
+                "Super Administrator",
+        };
 
-        const locationId =
-            Number(id);
+        return (
+            roleLabels[role] ??
+            role
+                .replaceAll("_", " ")
+                .replace(/\b\w/g, (char) =>
+                    char.toUpperCase()
+                )
+        );
+    };
 
-        if (
-            (
-                type !== "branch" &&
-                type !== "warehouse"
-            ) ||
-            !Number.isInteger(
-                locationId
-            )
+    /*
+     * ============================================================
+     * CLOSE USER MENU WHEN CLICKING OUTSIDE
+     * ============================================================
+     */
+
+    useEffect(() => {
+        function handleClickOutside(
+            event: MouseEvent
         ) {
-            return;
+            if (
+                userMenuRef.current &&
+                !userMenuRef.current.contains(
+                    event.target as Node
+                )
+            ) {
+                setUserMenuOpen(false);
+            }
         }
 
-        setLocation({
-            type,
-            id: locationId,
-        });
+        if (userMenuOpen) {
+            document.addEventListener(
+                "mousedown",
+                handleClickOutside
+            );
+        }
+
+        return () => {
+            document.removeEventListener(
+                "mousedown",
+                handleClickOutside
+            );
+        };
+    }, [userMenuOpen]);
+
+    /*
+     * ============================================================
+     * LOGOUT
+     * ============================================================
+     */
+
+    async function handleUserLogout() {
+        setUserMenuOpen(false);
+        await handleLogout();
     }
 
     return (
         <>
-            <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6">
-                <div className="flex min-w-0 items-center gap-3">
+            <header className="relative z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-6">
+                {/* ================================================== */}
+                {/* LEFT SIDE */}
+                {/* ================================================== */}
+
+                <div className="flex min-w-0 items-center gap-2">
+                    {/* Mobile Menu */}
                     <button
                         type="button"
                         onClick={onMenuClick}
-                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+                        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 lg:hidden"
                         aria-label="Open navigation menu"
                     >
                         <Menu className="h-5 w-5" />
                     </button>
 
-                    <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-900">
-                            Cornerstone Inventory System
-                        </p>
-
-                        {user && (
-                            <p className="truncate text-xs text-slate-500">
-                                {user.name}
-                            </p>
+                    {/* Desktop Sidebar Toggle */}
+                    <button
+                        type="button"
+                        onClick={onToggle}
+                        className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-blue-50 hover:text-blue-700 lg:inline-flex"
+                        aria-label={
+                            collapsed
+                                ? "Expand sidebar"
+                                : "Collapse sidebar"
+                        }
+                        title={
+                            collapsed
+                                ? "Expand sidebar"
+                                : "Collapse sidebar"
+                        }
+                    >
+                        {collapsed ? (
+                            <PanelRightClose className="h-5 w-5" />
+                        ) : (
+                            <PanelLeftClose className="h-5 w-5" />
                         )}
+                    </button>
+
+                    {/* Divider */}
+                    <div className="hidden h-6 w-px bg-slate-200 sm:block" />
+
+                    {/* Active Navigation */}
+                    <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-800">
+                            {activeNavigationLabel}
+                        </p>
                     </div>
                 </div>
 
-                <div className="flex shrink-0 items-center gap-3">
-                    {initialized &&
-                        isBranchCoordinator &&
-                        user.assigned_branches.length >
-                            0 && (
-                            <div className="hidden items-center gap-2 sm:flex">
-                                <MapPin className="h-4 w-4 text-slate-400" />
+                {/* ================================================== */}
+                {/* RIGHT SIDE */}
+                {/* ================================================== */}
 
-                                <Select
-                                    value={
-                                        activeLocationValue
-                                    }
-                                    onValueChange={
-                                        handleLocationChange
-                                    }
-                                >
-                                    <SelectTrigger className="w-52 border-slate-200 bg-white text-sm">
-                                        <SelectValue placeholder="Select branch">
-                                            {activeBranch
-                                                ? `${activeBranch.name} · ${activeBranch.code}`
-                                                : "Select branch"}
-                                        </SelectValue>
-                                    </SelectTrigger>
-
-                                    <SelectContent>
-                                        {user.assigned_branches.map(
-                                            (
-                                                branch
-                                            ) => (
-                                                <SelectItem
-                                                    key={
-                                                        branch.id
-                                                    }
-                                                    value={`branch:${branch.id}`}
-                                                >
-                                                    {
-                                                        branch.name
-                                                    }{" "}
-                                                    ·{" "}
-                                                    {
-                                                        branch.code
-                                                    }
-                                                </SelectItem>
-                                            )
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
-
-                    {initialized &&
-                        isWarehouseCoordinator &&
-                        user.assigned_warehouses.length >
-                            0 && (
-                            <div className="hidden items-center gap-2 sm:flex">
-                                <MapPin className="h-4 w-4 text-slate-400" />
-
-                                <Select
-                                    value={
-                                        activeLocationValue
-                                    }
-                                    onValueChange={
-                                        handleLocationChange
-                                    }
-                                >
-                                    <SelectTrigger className="w-52 border-slate-200 bg-white text-sm">
-                                        <SelectValue placeholder="Select warehouse">
-                                            {activeWarehouse
-                                                ? `${activeWarehouse.name} · ${activeWarehouse.code}`
-                                                : "Select warehouse"}
-                                        </SelectValue>
-                                    </SelectTrigger>
-
-                                    <SelectContent>
-                                        {user.assigned_warehouses.map(
-                                            (
-                                                warehouse
-                                            ) => (
-                                                <SelectItem
-                                                    key={
-                                                        warehouse.id
-                                                    }
-                                                    value={`warehouse:${warehouse.id}`}
-                                                >
-                                                    {
-                                                        warehouse.name
-                                                    }{" "}
-                                                    ·{" "}
-                                                    {
-                                                        warehouse.code
-                                                    }
-                                                </SelectItem>
-                                            )
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        )}
-
+                <div
+                    ref={userMenuRef}
+                    className="relative shrink-0"
+                >
+                    {/* User Menu Trigger */}
                     <button
                         type="button"
-                        onClick={handleLogout}
-                        disabled={
-                            logoutLoading
+                        onClick={() =>
+                            setUserMenuOpen(
+                                (current) =>
+                                    !current
+                            )
                         }
-                        className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-red-300 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4"
+                        className="group flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-slate-50 sm:px-3"
+                        aria-label="Open user menu"
+                        aria-expanded={
+                            userMenuOpen
+                        }
                     >
-                        <LogOut className="h-4 w-4" />
+                        {/* User Icon */}
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                            <UserCircle className="h-5 w-5" />
+                        </div>
 
-                        <span className="hidden sm:inline">
-                            {logoutLoading
-                                ? "Signing out..."
-                                : "Logout"}
-                        </span>
+                        {/* User Information */}
+                        {user && (
+                            <div className="hidden min-w-0 text-right sm:block">
+                                <p className="max-w-44 truncate text-sm font-semibold text-slate-800">
+                                    {user.name}
+                                </p>
+
+                                <p className="max-w-52 truncate text-xs text-slate-500">
+                                    {user.email}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Mobile User Name */}
+                        {user && (
+                            <div className="block min-w-0 sm:hidden">
+                                <p className="max-w-28 truncate text-sm font-medium text-slate-800">
+                                    {user.name}
+                                </p>
+                            </div>
+                        )}
                     </button>
+
+                    {/* ================================================== */}
+                    {/* USER DROPDOWN */}
+                    {/* ================================================== */}
+
+                    {userMenuOpen && user && (
+                        <div className="absolute right-0 top-full mt-2 w-[min(18rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                            {/* User Details */}
+                            <div className="border-b border-slate-100 bg-slate-50/70 px-4 py-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                                        <UserCircle className="h-6 w-6" />
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-semibold text-slate-900">
+                                            {user.name}
+                                        </p>
+
+                                        <p className="truncate text-xs text-slate-500">
+                                            {user.email}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Role */}
+                                <div className="mt-3">
+                                    <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                                        {getRoleLabel(
+                                            user.role
+                                        )}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Logout */}
+                            <div className="p-2">
+                                <button
+                                    type="button"
+                                    onClick={
+                                        handleUserLogout
+                                    }
+                                    disabled={
+                                        logoutLoading
+                                    }
+                                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <LogOut className="h-4 w-4 shrink-0" />
+
+                                    <span>
+                                        {logoutLoading
+                                            ? "Signing out..."
+                                            : "Logout"}
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </header>
+
+            {/* ================================================== */}
+            {/* LOGOUT ERROR */}
+            {/* ================================================== */}
 
             {logoutError && (
                 <div

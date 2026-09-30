@@ -224,18 +224,24 @@ export default function AppSidebar({
                             <Boxes className="h-5 w-5" />
                         </div>
 
-                        <span
+                        <div
                             className={[
-                                "truncate text-sm font-bold text-slate-900",
+                                "min-w-0",
                                 collapsed
                                     ? "lg:hidden"
                                     : "",
                             ].join(" ")}
                         >
-                            Cornerstone
-                        </span>
+                            <p className="truncate text-sm font-bold uppercase tracking-tight text-slate-900">
+                                Cornerstone Multi Sales
+                            </p>
+                        
+                            <p className="mt-0.5 truncate text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                                Inventory System Workflow
+                            </p>
+                        </div>
                     </Link>
-
+                        
                     <button
                         type="button"
                         onClick={onMobileClose}
@@ -245,10 +251,6 @@ export default function AppSidebar({
                         <X className="h-5 w-5" />
                     </button>
                 </div>
-
-                {/* ================================================== */}
-                {/* ACTIVE LOCATION */}
-                {/* ================================================== */}
 
                 {/* ================================================== */}
                 {/* ACTIVE LOCATION */}

@@ -11,6 +11,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Cornerstone Inventory System",
   description: "Business Inventory Management System",
+
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({

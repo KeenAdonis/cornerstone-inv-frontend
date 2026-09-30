@@ -1,316 +1,526 @@
 "use client";
 
 import {
-    AlertTriangle,
-    ArrowDownToLine,
-    ArrowUpFromLine,
-    ClipboardList,
-    Package,
-    ShoppingCart,
-} from "lucide-react";
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+
+import { AlertTriangle } from "lucide-react";
 
 import { useAuth } from "@/src/hooks/useAuth";
+import { useActiveLocationContext } from "@/src/context/ActiveLocationContext";
 
-const summaryCards = [
-    {
-        label: "Total Products",
-        value: "—",
-        description: "Products in the catalog",
-        icon: Package,
-        iconClassName: "bg-blue-50 text-blue-600",
-    },
-    {
-        label: "Low Stock",
-        value: "—",
-        description: "Items requiring attention",
-        icon: AlertTriangle,
-        iconClassName: "bg-amber-50 text-amber-600",
-    },
-    {
-        label: "Pending Requests",
-        value: "—",
-        description: "Requests awaiting action",
-        icon: ClipboardList,
-        iconClassName: "bg-sky-50 text-sky-600",
-    },
-    {
-        label: "Purchase Orders",
-        value: "—",
-        description: "Active purchase orders",
-        icon: ShoppingCart,
-        iconClassName: "bg-emerald-50 text-emerald-600",
-    },
-];
+import {
+    getInventory,
+    type Inventory,
+} from "@/src/services/inventoryService";
 
-const activityItems = [
-    {
-        title: "Stock In",
-        description: "Recent stock receiving activity will appear here.",
-        icon: ArrowDownToLine,
-        iconClassName: "bg-emerald-50 text-emerald-600",
-    },
-    {
-        title: "Stock Out",
-        description: "Recent stock release activity will appear here.",
-        icon: ArrowUpFromLine,
-        iconClassName: "bg-blue-50 text-blue-600",
-    },
-    {
-        title: "Requests",
-        description: "Pending branch requests will appear here.",
-        icon: ClipboardList,
-        iconClassName: "bg-sky-50 text-sky-600",
-    },
-];
+import {
+    getPurchaseOrders,
+    type PurchaseOrder,
+} from "@/src/services/purchaseOrderService";
+
+import {
+    getStockMovements,
+    type StockMovement,
+} from "@/src/services/stockMovementService";
+
+import WarehouseDashboardHeader from "./WarehouseDashboardHeader";
+
+import WarehouseDashboardSummary, {
+    type WarehouseDashboardStats,
+} from "./WarehouseDashboardSummary";
+
+import WarehouseDashboardWorkflow from "./WarehouseDashboardWorkflow";
+
+import WarehouseDashboardAttention from "./WarehouseDashboardAttention";
+
+import WarehouseDashboardInventoryStatus from "./WarehouseDashboardInventoryStatus";
+
+import WarehouseDashboardActivity from "./WarehouseDashboardActivity";
 
 export default function WarehouseDashboardPage() {
-    const {
-        user,
-        loading,
-    } = useAuth();
+    const { user, loading: authLoading } =
+        useAuth();
 
-    if (loading) {
+    const {
+        activeLocation,
+        initialized: locationInitialized,
+    } = useActiveLocationContext();
+
+    const [inventory, setInventory] = useState<
+        Inventory[]
+    >([]);
+
+    const [purchaseOrders, setPurchaseOrders] =
+        useState<PurchaseOrder[]>([]);
+
+    const [stockMovements, setStockMovements] =
+        useState<StockMovement[]>([]);
+
+    const [isLoading, setIsLoading] =
+        useState(true);
+
+    const [isRefreshing, setIsRefreshing] =
+        useState(false);
+
+    const [error, setError] = useState<
+        string | null
+    >(null);
+
+    /**
+     * Load all dashboard data
+     * for the currently active warehouse.
+     */
+    const loadDashboard = useCallback(
+        async (refresh = false) => {
+            if (
+                !locationInitialized ||
+                !activeLocation ||
+                activeLocation.type !==
+                    "warehouse"
+            ) {
+                return;
+            }
+
+            try {
+                if (refresh) {
+                    setIsRefreshing(true);
+                } else {
+                    setIsLoading(true);
+                }
+
+                setError(null);
+
+                const warehouseId =
+                    activeLocation.id;
+
+                const [
+                    inventoryData,
+                    purchaseOrderData,
+                    stockMovementData,
+                ] = await Promise.all([
+                    getInventory({
+                        locationType:
+                            "warehouse",
+                        warehouseId,
+                    }),
+
+                    getPurchaseOrders({
+                        warehouseId,
+                    }),
+
+                    getStockMovements({
+                        warehouseId,
+                    }),
+                ]);
+
+                setInventory(
+                    inventoryData
+                );
+
+                setPurchaseOrders(
+                    purchaseOrderData
+                );
+
+                setStockMovements(
+                    stockMovementData
+                );
+            } catch (err) {
+                console.error(
+                    "Failed to load warehouse dashboard:",
+                    err
+                );
+
+                setError(
+                    err instanceof Error
+                        ? err.message
+                        : "Failed to load warehouse dashboard."
+                );
+            } finally {
+                setIsLoading(false);
+                setIsRefreshing(false);
+            }
+        },
+        [
+            activeLocation,
+            locationInitialized,
+        ]
+    );
+
+    /**
+     * Load dashboard when the active
+     * warehouse becomes available or changes.
+     */
+    useEffect(() => {
+        if (
+            authLoading ||
+            !locationInitialized
+        ) {
+            return;
+        }
+
+        if (
+            !activeLocation ||
+            activeLocation.type !==
+                "warehouse"
+        ) {
+            setIsLoading(false);
+            return;
+        }
+
+        loadDashboard();
+    }, [
+        authLoading,
+        locationInitialized,
+        activeLocation,
+        loadDashboard,
+    ]);
+
+    /**
+     * Inventory statistics
+     */
+    const inventoryStats = useMemo(() => {
+        let inStock = 0;
+        let lowStock = 0;
+        let outOfStock = 0;
+
+        inventory.forEach((item) => {
+            const quantity = Number(
+                item.quantity ?? 0
+            );
+
+            const reorderLevel = Number(
+                item.reorder_level ?? 0
+            );
+
+            if (quantity <= 0) {
+                outOfStock++;
+                return;
+            }
+
+            if (quantity <= reorderLevel) {
+                lowStock++;
+                return;
+            }
+
+            inStock++;
+        });
+
+        return {
+            inStock,
+            lowStock,
+            outOfStock,
+        };
+    }, [inventory]);
+
+    /**
+     * Purchase order statistics
+     */
+    const stats: WarehouseDashboardStats =
+        useMemo(
+            () => ({
+                totalProducts:
+                    inventory.length,
+
+                lowStock:
+                    inventoryStats.lowStock,
+
+                outOfStock:
+                    inventoryStats.outOfStock,
+
+                pendingRequests:
+                    purchaseOrders.filter(
+                        (purchaseOrder) =>
+                            purchaseOrder.status ===
+                            "pending"
+                    ).length,
+
+                approvedRequests:
+                    purchaseOrders.filter(
+                        (purchaseOrder) =>
+                            purchaseOrder.status ===
+                            "approved"
+                    ).length,
+
+                preparing:
+                    purchaseOrders.filter(
+                        (purchaseOrder) =>
+                            purchaseOrder.status ===
+                            "preparing"
+                    ).length,
+
+                outForDelivery:
+                    purchaseOrders.filter(
+                        (purchaseOrder) =>
+                            purchaseOrder.status ===
+                            "out_for_delivery"
+                    ).length,
+
+                delivered:
+                    purchaseOrders.filter(
+                        (purchaseOrder) =>
+                            purchaseOrder.status ===
+                            "delivered"
+                    ).length,
+
+                completed:
+                    purchaseOrders.filter(
+                        (purchaseOrder) =>
+                            purchaseOrder.status ===
+                            "completed"
+                    ).length,
+            }),
+            [
+                inventory.length,
+                inventoryStats.lowStock,
+                inventoryStats.outOfStock,
+                purchaseOrders,
+            ]
+        );
+
+    /**
+     * Purchase orders currently requiring attention.
+     */
+    const attentionPurchaseOrders =
+        useMemo(() => {
+            return purchaseOrders
+                .filter((purchaseOrder) =>
+                    [
+                        "approved",
+                        "preparing",
+                        "out_for_delivery",
+                    ].includes(
+                        purchaseOrder.status
+                    )
+                )
+                .sort(
+                    (a, b) =>
+                        new Date(
+                            b.updated_at
+                        ).getTime() -
+                        new Date(
+                            a.updated_at
+                        ).getTime()
+                )
+                .slice(0, 5);
+        }, [purchaseOrders]);
+
+    /**
+     * Latest stock movements.
+     */
+    const recentMovements = useMemo(() => {
+        return [...stockMovements]
+            .sort(
+                (a, b) =>
+                    new Date(
+                        b.moved_at
+                    ).getTime() -
+                    new Date(
+                        a.moved_at
+                    ).getTime()
+            )
+            .slice(0, 5);
+    }, [stockMovements]);
+
+    /**
+     * Refresh dashboard.
+     */
+    const handleRefresh = () => {
+        loadDashboard(true);
+    };
+
+    /**
+     * Purchase-order navigation.
+     *
+     * Keep this isolated here so the
+     * presentation component stays reusable.
+     */
+    const handleViewAllPurchaseOrders =
+        () => {
+            window.location.href =
+                "/warehouse-coordinator/purchase-orders";
+        };
+
+    /**
+     * Authentication / location initialization.
+     */
+    if (
+        authLoading ||
+        !locationInitialized
+    ) {
         return (
-            <div className="flex min-h-[400px] items-center justify-center">
-                <p className="text-sm text-slate-400">
-                    Loading dashboard...
-                </p>
+            <div className="space-y-6">
+                <div className="animate-pulse">
+                    <div className="h-4 w-40 rounded bg-slate-200" />
+
+                    <div className="mt-3 h-8 w-72 rounded bg-slate-200" />
+
+                    <div className="mt-2 h-4 w-96 max-w-full rounded bg-slate-100" />
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    {Array.from({
+                        length: 4,
+                    }).map((_, index) => (
+                        <div
+                            key={index}
+                            className="h-32 animate-pulse rounded-xl border border-slate-100 bg-white"
+                        />
+                    ))}
+                </div>
             </div>
         );
     }
 
-    if (!user) {
-        return null;
+    /**
+     * The dashboard requires an active warehouse.
+     */
+    if (
+        !activeLocation ||
+        activeLocation.type !==
+            "warehouse"
+    ) {
+        return (
+            <div className="rounded-xl border border-amber-100 bg-amber-50 p-5">
+                <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                        <AlertTriangle className="h-5 w-5" />
+                    </div>
+
+                    <div>
+                        <h2 className="text-sm font-semibold text-amber-800">
+                            No active warehouse selected
+                        </h2>
+
+                        <p className="mt-1 text-sm text-amber-700">
+                            Please select or assign a warehouse
+                            before viewing the warehouse dashboard.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    /**
+     * API loading error.
+     */
+    if (error) {
+        return (
+            <div className="space-y-6">
+                <WarehouseDashboardHeader
+                    userName={user?.name}
+                    isRefreshing={
+                        isRefreshing
+                    }
+                    onRefresh={
+                        handleRefresh
+                    }
+                />
+
+                <div className="rounded-xl border border-red-100 bg-red-50 p-5">
+                    <div className="flex items-start gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600">
+                            <AlertTriangle className="h-5 w-5" />
+                        </div>
+
+                        <div>
+                            <h2 className="text-sm font-semibold text-red-800">
+                                Unable to load warehouse dashboard
+                            </h2>
+
+                            <p className="mt-1 text-sm text-red-600">
+                                {error}
+                            </p>
+
+                            <button
+                                type="button"
+                                onClick={
+                                    handleRefresh
+                                }
+                                className="mt-3 text-sm font-medium text-red-700 underline underline-offset-2 hover:text-red-800"
+                            >
+                                Try again
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="space-y-6">
-            {/* Page Header */}
-            <div>
-                <p className="text-sm font-medium text-blue-600">
-                    Warehouse Operations
-                </p>
+        <div className="space-y-0">
+            {/* Header */}
+            <WarehouseDashboardHeader
+                userName={user?.name}
+                isRefreshing={
+                    isRefreshing
+                }
+                onRefresh={
+                    handleRefresh
+                }
+            />
 
-                <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                    Dashboard
-                </h1>
+            {/* Summary */}
+            <WarehouseDashboardSummary
+                stats={stats}
+            />
 
-                <p className="mt-2 text-sm text-slate-500">
-                    Welcome back, {user.name}. Here is your
-                    warehouse activity overview.
-                </p>
-            </div>
+            {/* Purchase Order Workflow */}
+            <WarehouseDashboardWorkflow
+                pending={
+                    stats.pendingRequests
+                }
+                approved={
+                    stats.approvedRequests
+                }
+                preparing={
+                    stats.preparing
+                }
+                outForDelivery={
+                    stats.outForDelivery
+                }
+                delivered={
+                    stats.delivered
+                }
+                completed={
+                    stats.completed
+                }
+            />
 
-            {/* Summary Cards */}
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {summaryCards.map((card) => {
-                    const Icon = card.icon;
+            {/* Purchase Orders Requiring Attention */}
+            <WarehouseDashboardAttention
+                purchaseOrders={
+                    attentionPurchaseOrders
+                }
+                onViewAll={
+                    handleViewAllPurchaseOrders
+                }
+            />
 
-                    return (
-                        <div
-                            key={card.label}
-                            className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm shadow-slate-200/40"
-                        >
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <p className="text-sm font-medium text-slate-500">
-                                        {card.label}
-                                    </p>
-
-                                    <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-                                        {card.value}
-                                    </p>
-                                </div>
-
-                                <div
-                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${card.iconClassName}`}
-                                >
-                                    <Icon className="h-5 w-5" />
-                                </div>
-                            </div>
-
-                            <p className="mt-3 text-xs text-slate-400">
-                                {card.description}
-                            </p>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Main Content */}
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
-                {/* Inventory Overview */}
-                <section className="rounded-xl border border-blue-100 bg-white shadow-sm shadow-slate-200/40">
-                    <div className="border-b border-blue-50 px-5 py-4">
-                        <h2 className="text-base font-semibold text-slate-900">
-                            Inventory Overview
-                        </h2>
-
-                        <p className="mt-1 text-sm text-slate-500">
-                            Warehouse inventory status and stock
-                            activity.
-                        </p>
-                    </div>
-
-                    <div className="grid gap-4 p-5 sm:grid-cols-3">
-                        <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-4">
-                            <p className="text-xs font-medium uppercase tracking-wide text-blue-600">
-                                In Stock
-                            </p>
-
-                            <p className="mt-2 text-2xl font-bold text-slate-900">
-                                —
-                            </p>
-
-                            <p className="mt-1 text-xs text-slate-500">
-                                Available inventory
-                            </p>
-                        </div>
-
-                        <div className="rounded-lg border border-amber-100 bg-amber-50/50 p-4">
-                            <p className="text-xs font-medium uppercase tracking-wide text-amber-600">
-                                Low Stock
-                            </p>
-
-                            <p className="mt-2 text-2xl font-bold text-slate-900">
-                                —
-                            </p>
-
-                            <p className="mt-1 text-xs text-slate-500">
-                                Needs replenishment
-                            </p>
-                        </div>
-
-                        <div className="rounded-lg border border-red-100 bg-red-50/50 p-4">
-                            <p className="text-xs font-medium uppercase tracking-wide text-red-600">
-                                Out of Stock
-                            </p>
-
-                            <p className="mt-2 text-2xl font-bold text-slate-900">
-                                —
-                            </p>
-
-                            <p className="mt-1 text-xs text-slate-500">
-                                Currently unavailable
-                            </p>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Quick Actions */}
-                <section className="rounded-xl border border-blue-100 bg-white shadow-sm shadow-slate-200/40">
-                    <div className="border-b border-blue-50 px-5 py-4">
-                        <h2 className="text-base font-semibold text-slate-900">
-                            Quick Actions
-                        </h2>
-
-                        <p className="mt-1 text-sm text-slate-500">
-                            Common warehouse operations.
-                        </p>
-                    </div>
-
-                    <div className="space-y-3 p-5">
-                        <button
-                            type="button"
-                            className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/50"
-                        >
-                            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                                <Package className="h-4 w-4" />
-                            </span>
-
-                            <span>
-                                <span className="block text-sm font-medium text-slate-800">
-                                    Manage Products
-                                </span>
-
-                                <span className="block text-xs text-slate-500">
-                                    View and manage product catalog
-                                </span>
-                            </span>
-                        </button>
-
-                        <button
-                            type="button"
-                            className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/50"
-                        >
-                            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                                <ArrowDownToLine className="h-4 w-4" />
-                            </span>
-
-                            <span>
-                                <span className="block text-sm font-medium text-slate-800">
-                                    Receive Stock
-                                </span>
-
-                                <span className="block text-xs text-slate-500">
-                                    Record incoming inventory
-                                </span>
-                            </span>
-                        </button>
-
-                        <button
-                            type="button"
-                            className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/50"
-                        >
-                            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
-                                <ClipboardList className="h-4 w-4" />
-                            </span>
-
-                            <span>
-                                <span className="block text-sm font-medium text-slate-800">
-                                    View Requests
-                                </span>
-
-                                <span className="block text-xs text-slate-500">
-                                    Review branch stock requests
-                                </span>
-                            </span>
-                        </button>
-                    </div>
-                </section>
-            </div>
+            {/* Inventory Health */}
+            <WarehouseDashboardInventoryStatus
+                inStock={
+                    inventoryStats.inStock
+                }
+                lowStock={
+                    inventoryStats.lowStock
+                }
+                outOfStock={
+                    inventoryStats.outOfStock
+                }
+            />
 
             {/* Recent Activity */}
-            <section className="rounded-xl border border-blue-100 bg-white shadow-sm shadow-slate-200/40">
-                <div className="border-b border-blue-50 px-5 py-4">
-                    <h2 className="text-base font-semibold text-slate-900">
-                        Recent Activity
-                    </h2>
-
-                    <p className="mt-1 text-sm text-slate-500">
-                        Latest warehouse operations.
-                    </p>
-                </div>
-
-                <div className="divide-y divide-slate-100">
-                    {activityItems.map((item) => {
-                        const Icon = item.icon;
-
-                        return (
-                            <div
-                                key={item.title}
-                                className="flex items-center gap-4 px-5 py-4"
-                            >
-                                <div
-                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${item.iconClassName}`}
-                                >
-                                    <Icon className="h-4 w-4" />
-                                </div>
-
-                                <div className="min-w-0">
-                                    <p className="text-sm font-medium text-slate-800">
-                                        {item.title}
-                                    </p>
-
-                                    <p className="mt-0.5 text-xs text-slate-500">
-                                        {item.description}
-                                    </p>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </section>
+            <WarehouseDashboardActivity
+                movements={
+                    recentMovements
+                }
+            />
         </div>
     );
 }

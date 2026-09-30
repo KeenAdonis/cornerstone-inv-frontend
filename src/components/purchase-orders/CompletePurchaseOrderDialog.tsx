@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import {
+    Camera,
     ImagePlus,
     RotateCcw,
     Upload,
@@ -240,6 +241,7 @@ export default function CompletePurchaseOrderDialog({
                             className="text-sm font-medium text-slate-800"
                         >
                             Date of Arrival
+
                             <span className="ml-1 text-red-500">
                                 *
                             </span>
@@ -275,56 +277,102 @@ export default function CompletePurchaseOrderDialog({
                         </p>
                     </div>
 
-                    {/* Upload Area */}
+                    {/* Proof of Delivery */}
                     <div className="space-y-3">
                         <div>
                             <p className="text-sm font-medium text-slate-800">
                                 Proof of Delivery
+
                                 <span className="ml-1 text-red-500">
                                     *
                                 </span>
                             </p>
 
                             <p className="mt-1 text-xs text-slate-500">
-                                Upload a clear photo of the delivered items or delivery receipt.
+                                Take a photo or upload a clear image of the delivered items or delivery receipt.
                             </p>
                         </div>
 
                         {!selectedFile ? (
-                            <label
-                                htmlFor="delivery-photo"
-                                className="flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-blue-200 bg-blue-50/30 px-6 py-10 text-center transition hover:border-blue-300 hover:bg-blue-50"
-                            >
-                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                            <div className="rounded-md border border-dashed border-blue-200 bg-blue-50/30 px-5 py-8 text-center">
+                                <div className="flex h-11 w-11 mx-auto items-center justify-center rounded-full bg-blue-100 text-blue-600">
                                     <ImagePlus className="h-5 w-5" />
                                 </div>
 
                                 <p className="mt-3 text-sm font-medium text-slate-800">
-                                    Upload proof of delivery
+                                    Add proof of delivery
                                 </p>
 
                                 <p className="mt-1 text-xs text-slate-500">
                                     JPG, PNG, or WebP · Maximum 5 MB
                                 </p>
 
-                                <span className="mt-4 inline-flex items-center gap-2 rounded-sm border border-blue-200 bg-white px-3 py-2 text-xs font-medium text-blue-700 shadow-sm">
-                                    <Upload className="h-3.5 w-3.5" />
-                                    Choose Photo
-                                </span>
+                                {/* Upload Options */}
+                                <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+                                    {/* Camera */}
+                                    <label
+                                        htmlFor="delivery-photo-camera"
+                                        className={[
+                                            "inline-flex cursor-pointer items-center justify-center gap-2 rounded-sm border border-blue-600 bg-blue-600 px-4 py-2.5 text-xs font-medium text-white shadow-sm transition",
+                                            "hover:bg-blue-700",
+                                            completing
+                                                ? "pointer-events-none opacity-50"
+                                                : "",
+                                        ].join(
+                                            " "
+                                        )}
+                                    >
+                                        <Camera className="h-4 w-4" />
 
-                                <input
-                                    id="delivery-photo"
-                                    type="file"
-                                    accept="image/jpeg,image/png,image/webp"
-                                    onChange={
-                                        handleFileChange
-                                    }
-                                    disabled={
-                                        completing
-                                    }
-                                    className="sr-only"
-                                />
-                            </label>
+                                        Use Camera
+
+                                        <input
+                                            id="delivery-photo-camera"
+                                            type="file"
+                                            accept="image/*"
+                                            capture="environment"
+                                            onChange={
+                                                handleFileChange
+                                            }
+                                            disabled={
+                                                completing
+                                            }
+                                            className="sr-only"
+                                        />
+                                    </label>
+
+                                    {/* Upload */}
+                                    <label
+                                        htmlFor="delivery-photo"
+                                        className={[
+                                            "inline-flex cursor-pointer items-center justify-center gap-2 rounded-sm border border-blue-200 bg-white px-4 py-2.5 text-xs font-medium text-blue-700 shadow-sm transition",
+                                            "hover:bg-blue-50",
+                                            completing
+                                                ? "pointer-events-none opacity-50"
+                                                : "",
+                                        ].join(
+                                            " "
+                                        )}
+                                    >
+                                        <Upload className="h-4 w-4" />
+
+                                        Choose Photo
+
+                                        <input
+                                            id="delivery-photo"
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            onChange={
+                                                handleFileChange
+                                            }
+                                            disabled={
+                                                completing
+                                            }
+                                            className="sr-only"
+                                        />
+                                    </label>
+                                </div>
+                            </div>
                         ) : (
                             <div className="overflow-hidden rounded-md border border-slate-200 bg-slate-50">
                                 {/* Preview */}

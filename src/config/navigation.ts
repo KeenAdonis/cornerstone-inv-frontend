@@ -26,9 +26,19 @@ const adminNavigation: NavigationItem[] = [
         icon: LayoutDashboard,
     },
     {
+        label: "Products",
+        href: "/admin/products",
+        icon: Package,
+    },
+    {
+        label: "Categories",
+        href: "/admin/categories",
+        icon: Tags,
+    },
+    {
         label: "Inventory",
         href: "/admin/inventory",
-        icon: Package,
+        icon: Warehouse,
     },
     {
         label: "Purchase Orders",

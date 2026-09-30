@@ -49,11 +49,11 @@ import {
     useToggleProductStatus,
 } from "@/src/hooks/products/useToggleProductStatus";
 
-import ProductTableToolbar from "@/src/components/warehouse-coordinator/products/ProductTableToolbar";
+import ProductTableToolbar from "@/src/components/products/ProductTableToolbar";
 
-import ViewProductDialog from "@/src/components/warehouse-coordinator/products/ViewProductDialog";
-import EditProductDialog from "@/src/components/warehouse-coordinator/products/EditProductDialog";
-import DeleteProductDialog from "@/src/components/warehouse-coordinator/products/DeleteProductDialog";
+import ViewProductDialog from "@/src/components/products/ViewProductDialog";
+import EditProductDialog from "@/src/components/products/EditProductDialog";
+import DeleteProductDialog from "@/src/components/products/DeleteProductDialog";
 
 interface ProductTableProps {
     products: Product[];

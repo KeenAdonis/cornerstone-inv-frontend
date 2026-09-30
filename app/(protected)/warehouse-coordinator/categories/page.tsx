@@ -6,8 +6,8 @@ import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-import AddCategoryDialog from "@/src/components/warehouse-coordinator/categories/AddCategoryDialog";
-import CategoryTable from "@/src/components/warehouse-coordinator/categories/CategoryTable";
+import AddCategoryDialog from "@/src/components/categories/AddCategoryDialog";
+import CategoryTable from "@/src/components/categories/CategoryTable";
 
 import { useCategories } from "@/src/hooks/categories/useCategories";
 

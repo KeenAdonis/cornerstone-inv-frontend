@@ -49,10 +49,10 @@ import {
     useToggleCategoryStatus,
 } from "@/src/hooks/categories/useToggleCategoryStatus";
 
-import CategoryTableToolbar from "@/src/components/warehouse-coordinator/categories/CategoryTableToolbar";
-import ViewCategoryDialog from "@/src/components/warehouse-coordinator/categories/ViewCategoryDialog";
-import EditCategoryDialog from "@/src/components/warehouse-coordinator/categories/EditCategoryDialog";
-import DeleteCategoryDialog from "@/src/components/warehouse-coordinator/categories/DeleteCategoryDialog";
+import CategoryTableToolbar from "@/src/components/categories/CategoryTableToolbar";
+import ViewCategoryDialog from "@/src/components/categories/ViewCategoryDialog";
+import EditCategoryDialog from "@/src/components/categories/EditCategoryDialog";
+import DeleteCategoryDialog from "@/src/components/categories/DeleteCategoryDialog";
 
 type CategoryStatus =
     Category["status"];

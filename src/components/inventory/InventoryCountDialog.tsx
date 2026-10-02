@@ -68,6 +68,11 @@ export default function InventoryCountDialog({
         setValidationError,
     ] = useState<string | null>(null);
 
+    const [
+        invalidInventoryIds,
+        setInvalidInventoryIds,
+    ] = useState<number[]>([]);
+
     const { user } = useAuth();
 
     const {
@@ -123,8 +128,7 @@ export default function InventoryCountDialog({
         setItems(
             inventory.map((item) => ({
                 inventory_id: item.id,
-                counted_quantity:
-                    item.quantity,
+                counted_quantity: "0",
             }))
         );
     }, [
@@ -142,6 +146,62 @@ export default function InventoryCountDialog({
         inventoryId: number,
         value: string
     ) => {
+        const inventoryItem = inventory.find(
+            (item) =>
+                item.id === inventoryId
+        );
+
+        if (
+            inventoryItem &&
+            value !== ""
+        ) {
+            const countedQuantity =
+                Number(value);
+
+            const systemQuantity =
+                Number(
+                    inventoryItem.quantity
+                );
+
+            if (
+                Number.isFinite(
+                    countedQuantity
+                ) &&
+                countedQuantity >
+                    systemQuantity
+            ) {
+                setInvalidInventoryIds(
+                    (current) =>
+                        current.includes(
+                            inventoryId
+                        )
+                            ? current
+                            : [
+                                  ...current,
+                                  inventoryId,
+                              ]
+                );
+            } else {
+                setInvalidInventoryIds(
+                    (current) =>
+                        current.filter(
+                            (id) =>
+                                id !==
+                                inventoryId
+                        )
+                );
+            }
+        } else {
+            setInvalidInventoryIds(
+                (current) =>
+                    current.filter(
+                        (id) =>
+                            id !==
+                            inventoryId
+                    )
+            );
+        }
+
         setItems((current) =>
             current.map((item) =>
                 item.inventory_id ===
@@ -179,23 +239,58 @@ export default function InventoryCountDialog({
             return;
         }
 
-        const invalidItem =
-            items.find(
-                (item) =>
-                    item.counted_quantity ===
-                        "" ||
+        const invalidItems = items.filter(
+            (formItem) => {
+                const inventoryItem =
+                    inventory.find(
+                        (item) =>
+                            item.id ===
+                            formItem.inventory_id
+                    );
+                
+                if (!inventoryItem) {
+                    return true;
+                }
+            
+                const countedQuantity =
                     Number(
-                        item.counted_quantity
-                    ) < 0
-            );
+                        formItem.counted_quantity
+                    );
+                
+                const systemQuantity =
+                    Number(
+                        inventoryItem.quantity
+                    );
+                
+                return (
+                    formItem.counted_quantity ===
+                        "" ||
+                    !Number.isFinite(
+                        countedQuantity
+                    ) ||
+                    countedQuantity < 0 ||
+                    countedQuantity >
+                        systemQuantity
+                );
+            }
+        );
 
-        if (invalidItem) {
+        if (invalidItems.length > 0) {
+            setInvalidInventoryIds(
+                invalidItems.map(
+                    (item) =>
+                        item.inventory_id
+                )
+            );
+        
             setValidationError(
-                "Please enter a valid physical count for every product."
+                "Please correct the highlighted physical counts before completing the inventory count."
             );
-
+        
             return;
         }
+
+        setInvalidInventoryIds([]);
 
         const inventoryCountData: CreateInventoryCountData =
             {
@@ -394,42 +489,56 @@ export default function InventoryCountDialog({
                                                     </td>
 
                                                     <td className="px-4 py-3 text-right font-medium text-slate-700">
-                                                        {Number(
-                                                            item.quantity
-                                                        ).toLocaleString(
-                                                            "en-PH",
-                                                            {
-                                                                maximumFractionDigits: 2,
-                                                            }
-                                                        )}
+                                                        {Number(item.quantity).toLocaleString("en-PH", {
+                                                            maximumFractionDigits: 0,
+                                                        })}
                                                     </td>
 
                                                     <td className="px-4 py-3">
                                                         <div className="flex justify-end">
-                                                            <Input
-                                                                type="number"
-                                                                min="0"
-                                                                step="0.01"
-                                                                value={
-                                                                    formItem
-                                                                        ?.counted_quantity ??
-                                                                    ""
-                                                                }
-                                                                onChange={(
-                                                                    event
-                                                                ) =>
-                                                                    updateCountedQuantity(
-                                                                        item.id,
-                                                                        event
-                                                                            .target
-                                                                            .value
-                                                                    )
-                                                                }
-                                                                disabled={
-                                                                    isLoading
-                                                                }
-                                                                className="w-32 border-slate-200 bg-white text-right text-slate-900 focus-visible:border-blue-400 focus-visible:ring-blue-100"
-                                                            />
+                                                            <div className="flex flex-col items-end">
+    <Input
+        type="number"
+        min="0"
+        step="0.01"
+        value={
+            formItem
+                ?.counted_quantity ??
+            ""
+        }
+        onChange={(event) =>
+            updateCountedQuantity(
+                item.id,
+                event.target.value
+            )
+        }
+        disabled={isLoading}
+        className={
+            invalidInventoryIds.includes(
+                item.id
+            )
+                ? "w-32 border-red-400 bg-red-50 text-right text-red-700 focus-visible:border-red-500 focus-visible:ring-red-100"
+                : "w-32 border-slate-200 bg-white text-right text-slate-900 focus-visible:border-blue-400 focus-visible:ring-blue-100"
+        }
+    />
+
+    {invalidInventoryIds.includes(
+        item.id
+    ) && (
+        <p className="mt-1 max-w-55 text-right text-xs text-red-600">
+            Physical Count cannot exceed to{" "}
+            {Number(
+                item.quantity
+            ).toLocaleString(
+                "en-PH",
+                {
+                    maximumFractionDigits: 2,
+                }
+            )}
+            .
+        </p>
+    )}
+</div>
                                                         </div>
                                                     </td>
                                                 </tr>

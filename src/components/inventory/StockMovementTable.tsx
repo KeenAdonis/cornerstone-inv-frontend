@@ -29,16 +29,9 @@ import {
 
 import { Button } from "@/components/ui/button";
 
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
-
 import { Input } from "@/components/ui/input";
+
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 
 import type {
     StockMovement,
@@ -48,60 +41,6 @@ interface StockMovementTableProps {
     stockMovements: StockMovement[];
     onView: (stockMovement: StockMovement) => void;
 }
-
-const STOCK_MOVEMENTS_PER_PAGE = 5;
-
-const getPaginationPages = (
-    currentPage: number,
-    totalPages: number
-): (number | "...")[] => {
-    if (totalPages <= 7) {
-        return Array.from(
-            {
-                length: totalPages,
-            },
-            (_, index) =>
-                index + 1
-        );
-    }
-
-    if (currentPage <= 4) {
-        return [
-            1,
-            2,
-            3,
-            4,
-            5,
-            "...",
-            totalPages,
-        ];
-    }
-
-    if (
-        currentPage >=
-        totalPages - 3
-    ) {
-        return [
-            1,
-            "...",
-            totalPages - 4,
-            totalPages - 3,
-            totalPages - 2,
-            totalPages - 1,
-            totalPages,
-        ];
-    }
-
-    return [
-        1,
-        "...",
-        currentPage - 1,
-        currentPage,
-        currentPage + 1,
-        "...",
-        totalPages,
-    ];
-};
 
 const getMovementTypeLabel = (
     type: StockMovement["movement_type"]
@@ -194,6 +133,9 @@ export default function StockMovementTable({
 }: StockMovementTableProps) {
     const [currentPage, setCurrentPage] =
         useState(1);
+
+    const [pageSize, setPageSize] =
+        useState(10);
 
     const [search, setSearch] =
         useState("");
@@ -298,7 +240,7 @@ export default function StockMovementTable({
 
     const totalPages = Math.ceil(
         filteredStockMovements.length /
-            STOCK_MOVEMENTS_PER_PAGE
+            pageSize
     );
 
     useEffect(() => {
@@ -315,42 +257,17 @@ export default function StockMovementTable({
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [search]);
+    }, [search, pageSize]);
 
     const startIndex =
         (currentPage - 1) *
-        STOCK_MOVEMENTS_PER_PAGE;
+        pageSize;
 
     const paginatedStockMovements =
         filteredStockMovements.slice(
             startIndex,
-            startIndex +
-                STOCK_MOVEMENTS_PER_PAGE
+            startIndex + pageSize
         );
-
-    const paginationPages =
-        getPaginationPages(
-            currentPage,
-            totalPages
-        );
-
-    const goToPreviousPage = () => {
-        setCurrentPage((page) =>
-            Math.max(
-                page - 1,
-                1
-            )
-        );
-    };
-
-    const goToNextPage = () => {
-        setCurrentPage((page) =>
-            Math.min(
-                page + 1,
-                totalPages
-            )
-        );
-    };
 
     return (
         <div className="overflow-hidden rounded-sm border border-slate-200 bg-white">
@@ -381,32 +298,6 @@ export default function StockMovementTable({
                 </div>
             </div>
 
-            {/* Result Count */}
-            <div className="border-b border-blue-50 px-4 py-2.5">
-                <p className="text-xs text-slate-500">
-                    Showing{" "}
-                    <span className="font-medium text-slate-700">
-                        {filteredStockMovements.length ===
-                        0
-                            ? 0
-                            : startIndex + 1}
-                        –
-                        {Math.min(
-                            startIndex +
-                                paginatedStockMovements.length,
-                            filteredStockMovements.length
-                        )}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-medium text-slate-700">
-                        {
-                            filteredStockMovements.length
-                        }
-                    </span>{" "}
-                    movements
-                </p>
-            </div>
-
             {/* Empty State */}
             {filteredStockMovements.length ===
             0 ? (
@@ -424,39 +315,39 @@ export default function StockMovementTable({
                     <Table>
                         <TableHeader>
                             <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Product
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Moved At
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Type
                                 </TableHead>
 
-                                <TableHead className="text-right text-blue-900">
+                                <TableHead className="whitespace-nowrap text-right text-xs font-semibold text-blue-900">
                                     Quantity
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     From
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     To
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Reference
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Created By
                                 </TableHead>
 
-                                <TableHead className="w-16 text-right text-blue-900">
+                                <TableHead className="w-16 whitespace-nowrap text-right text-xs font-semibold text-blue-900">
                                     Actions
                                 </TableHead>
                             </TableRow>
@@ -625,110 +516,32 @@ export default function StockMovementTable({
                     </Table>
 
                     {/* Pagination */}
-                    {totalPages > 1 && (
-                        <div className="border-t border-blue-100 bg-white px-4 py-3">
-                            <Pagination>
-                                <PaginationContent>
-                                    <PaginationItem>
-                                        <PaginationPrevious
-                                            href="#"
-                                            onClick={(
-                                                event
-                                            ) => {
-                                                event.preventDefault();
-
-                                                goToPreviousPage();
-                                            }}
-                                            aria-disabled={
-                                                currentPage ===
-                                                1
-                                            }
-                                            className={
-                                                currentPage ===
-                                                1
-                                                    ? "pointer-events-none opacity-50"
-                                                    : ""
-                                            }
-                                        />
-                                    </PaginationItem>
-
-                                    {paginationPages.map(
-                                        (
-                                            page,
-                                            index
-                                        ) => {
-                                            if (
-                                                page ===
-                                                "..."
-                                            ) {
-                                                return (
-                                                    <PaginationItem
-                                                        key={`ellipsis-${index}`}
-                                                    >
-                                                        <span className="flex h-9 w-9 items-center justify-center text-sm text-slate-400">
-                                                            ...
-                                                        </span>
-                                                    </PaginationItem>
-                                                );
-                                            }
-
-                                            return (
-                                                <PaginationItem
-                                                    key={
-                                                        page
-                                                    }
-                                                >
-                                                    <PaginationLink
-                                                        href="#"
-                                                        isActive={
-                                                            page ===
-                                                            currentPage
-                                                        }
-                                                        onClick={(
-                                                            event
-                                                        ) => {
-                                                            event.preventDefault();
-
-                                                            setCurrentPage(
-                                                                page
-                                                            );
-                                                        }}
-                                                    >
-                                                        {
-                                                            page
-                                                        }
-                                                    </PaginationLink>
-                                                </PaginationItem>
-                                            );
-                                        }
-                                    )}
-
-                                    <PaginationItem>
-                                        <PaginationNext
-                                            href="#"
-                                            onClick={(
-                                                event
-                                            ) => {
-                                                event.preventDefault();
-
-                                                goToNextPage();
-                                            }}
-                                            aria-disabled={
-                                                currentPage ===
-                                                totalPages
-                                            }
-                                            className={
-                                                currentPage ===
-                                                totalPages
-                                                    ? "pointer-events-none opacity-50"
-                                                    : ""
-                                            }
-                                        />
-                                    </PaginationItem>
-                                </PaginationContent>
-                            </Pagination>
-                        </div>
-                    )}
+                    <DataTablePagination
+                        currentPage={
+                            currentPage
+                        }
+                        totalPages={
+                            totalPages
+                        }
+                        totalItems={
+                            filteredStockMovements.length
+                        }
+                        pageSize={
+                            pageSize
+                        }
+                        pageSizeOptions={[
+                            10,
+                            25,
+                            50,
+                            100,
+                        ]}
+                        onPageChange={
+                            setCurrentPage
+                        }
+                        onPageSizeChange={
+                            setPageSize
+                        }
+                    />
                 </>
             )}
         </div>

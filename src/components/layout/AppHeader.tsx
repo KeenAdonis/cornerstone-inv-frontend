@@ -1,17 +1,10 @@
 "use client";
 
 import {
-    useEffect,
-    useRef,
-    useState,
-} from "react";
-
-import {
-    LogOut,
     Menu,
     PanelLeftClose,
     PanelRightClose,
-    UserCircle,
+    MapPin,
 } from "lucide-react";
 
 import { usePathname } from "next/navigation";
@@ -21,7 +14,17 @@ import {
 } from "@/src/config/navigation";
 
 import { useAuth } from "@/src/hooks/useAuth";
-import { useLogout } from "@/src/hooks/useLogout";
+
+import {
+    useActiveLocationContext,
+} from "@/src/context/ActiveLocationContext";
+
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+} from "@/components/ui/select";
 
 interface AppHeaderProps {
     collapsed: boolean;
@@ -39,16 +42,10 @@ export default function AppHeader({
     const { user } = useAuth();
 
     const {
-        handleLogout,
-        loading: logoutLoading,
-        error: logoutError,
-    } = useLogout();
-
-    const [userMenuOpen, setUserMenuOpen] =
-        useState(false);
-
-    const userMenuRef =
-        useRef<HTMLDivElement | null>(null);
+        activeLocation,
+        setLocation,
+        initialized,
+    } = useActiveLocationContext();
 
     /*
      * ============================================================
@@ -75,257 +72,279 @@ export default function AppHeader({
 
     /*
      * ============================================================
-     * USER ROLE LABEL
+     * ACTIVE LOCATION
      * ============================================================
      */
 
-    const getRoleLabel = (
-        role: string
-    ): string => {
-        const roleLabels: Record<
-            string,
-            string
-        > = {
-            admin: "Administrator",
-            branch_coordinator:
-                "Branch Coordinator",
-            warehouse_coordinator:
-                "Warehouse Coordinator",
-            superadmin:
-                "Super Administrator",
-        };
+    const isBranchCoordinator =
+        user?.role ===
+        "branch_coordinator";
 
-        return (
-            roleLabels[role] ??
-            role
-                .replaceAll("_", " ")
-                .replace(/\b\w/g, (char) =>
-                    char.toUpperCase()
-                )
+    const isWarehouseCoordinator =
+        user?.role ===
+        "warehouse_coordinator";
+
+    const activeBranch =
+        isBranchCoordinator &&
+        activeLocation?.type ===
+            "branch"
+            ? user.assigned_branches.find(
+                  (branch) =>
+                      branch.id ===
+                      activeLocation.id
+              )
+            : null;
+
+    const activeWarehouse =
+        isWarehouseCoordinator &&
+        activeLocation?.type ===
+            "warehouse"
+            ? user.assigned_warehouses.find(
+                  (warehouse) =>
+                      warehouse.id ===
+                      activeLocation.id
+              )
+            : null;
+
+    const activeLocationValue =
+        activeLocation
+            ? `${activeLocation.type}:${activeLocation.id}`
+            : "";
+
+    const hasLocationSelector =
+        initialized &&
+        (
+            (
+                isBranchCoordinator &&
+                user.assigned_branches.length >
+                    0
+            ) ||
+            (
+                isWarehouseCoordinator &&
+                user.assigned_warehouses.length >
+                    0
+            )
         );
-    };
+
+    const activeLocationName =
+        activeBranch?.name ??
+        activeWarehouse?.name ??
+        "";
+
+    const activeLocationCode =
+        activeBranch?.code ??
+        activeWarehouse?.code ??
+        "";
+
+    const activeLocationLabel =
+        activeLocationName
+            ? `${activeLocationName} · ${activeLocationCode}`
+            : "";
 
     /*
      * ============================================================
-     * CLOSE USER MENU WHEN CLICKING OUTSIDE
+     * LOCATION CHANGE
      * ============================================================
      */
 
-    useEffect(() => {
-        function handleClickOutside(
-            event: MouseEvent
+    function handleLocationChange(
+        value: string | null
+    ) {
+        if (!value) {
+            return;
+        }
+
+        const [
+            type,
+            id,
+        ] = value.split(":");
+
+        const locationId =
+            Number(id);
+
+        if (
+            (
+                type !== "branch" &&
+                type !== "warehouse"
+            ) ||
+            !Number.isInteger(
+                locationId
+            )
         ) {
-            if (
-                userMenuRef.current &&
-                !userMenuRef.current.contains(
-                    event.target as Node
-                )
-            ) {
-                setUserMenuOpen(false);
-            }
+            return;
         }
 
-        if (userMenuOpen) {
-            document.addEventListener(
-                "mousedown",
-                handleClickOutside
-            );
-        }
-
-        return () => {
-            document.removeEventListener(
-                "mousedown",
-                handleClickOutside
-            );
-        };
-    }, [userMenuOpen]);
-
-    /*
-     * ============================================================
-     * LOGOUT
-     * ============================================================
-     */
-
-    async function handleUserLogout() {
-        setUserMenuOpen(false);
-        await handleLogout();
+        setLocation({
+            type,
+            id: locationId,
+        });
     }
 
     return (
-        <>
-            <header className="relative z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-6">
-                {/* ================================================== */}
-                {/* LEFT SIDE */}
-                {/* ================================================== */}
+        <header className="relative z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-6">
+            {/* ================================================== */}
+            {/* LEFT SIDE */}
+            {/* ================================================== */}
 
-                <div className="flex min-w-0 items-center gap-2">
-                    {/* Mobile Menu */}
-                    <button
-                        type="button"
-                        onClick={onMenuClick}
-                        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 lg:hidden"
-                        aria-label="Open navigation menu"
-                    >
-                        <Menu className="h-5 w-5" />
-                    </button>
-
-                    {/* Desktop Sidebar Toggle */}
-                    <button
-                        type="button"
-                        onClick={onToggle}
-                        className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-blue-50 hover:text-blue-700 lg:inline-flex"
-                        aria-label={
-                            collapsed
-                                ? "Expand sidebar"
-                                : "Collapse sidebar"
-                        }
-                        title={
-                            collapsed
-                                ? "Expand sidebar"
-                                : "Collapse sidebar"
-                        }
-                    >
-                        {collapsed ? (
-                            <PanelRightClose className="h-5 w-5" />
-                        ) : (
-                            <PanelLeftClose className="h-5 w-5" />
-                        )}
-                    </button>
-
-                    {/* Divider */}
-                    <div className="hidden h-6 w-px bg-slate-200 sm:block" />
-
-                    {/* Active Navigation */}
-                    <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-800">
-                            {activeNavigationLabel}
-                        </p>
-                    </div>
-                </div>
-
-                {/* ================================================== */}
-                {/* RIGHT SIDE */}
-                {/* ================================================== */}
-
-                <div
-                    ref={userMenuRef}
-                    className="relative shrink-0"
+            <div className="flex min-w-0 items-center gap-2">
+                {/* Mobile Menu */}
+                <button
+                    type="button"
+                    onClick={onMenuClick}
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+                    aria-label="Open navigation menu"
                 >
-                    {/* User Menu Trigger */}
-                    <button
-                        type="button"
-                        onClick={() =>
-                            setUserMenuOpen(
-                                (current) =>
-                                    !current
-                            )
-                        }
-                        className="group flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-slate-50 sm:px-3"
-                        aria-label="Open user menu"
-                        aria-expanded={
-                            userMenuOpen
-                        }
-                    >
-                        {/* User Icon */}
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                            <UserCircle className="h-5 w-5" />
-                        </div>
+                    <Menu className="h-5 w-5" />
+                </button>
 
-                        {/* User Information */}
-                        {user && (
-                            <div className="hidden min-w-0 text-right sm:block">
-                                <p className="max-w-44 truncate text-sm font-semibold text-slate-800">
-                                    {user.name}
-                                </p>
-
-                                <p className="max-w-52 truncate text-xs text-slate-500">
-                                    {user.email}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Mobile User Name */}
-                        {user && (
-                            <div className="block min-w-0 sm:hidden">
-                                <p className="max-w-28 truncate text-sm font-medium text-slate-800">
-                                    {user.name}
-                                </p>
-                            </div>
-                        )}
-                    </button>
-
-                    {/* ================================================== */}
-                    {/* USER DROPDOWN */}
-                    {/* ================================================== */}
-
-                    {userMenuOpen && user && (
-                        <div className="absolute right-0 top-full mt-2 w-[min(18rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
-                            {/* User Details */}
-                            <div className="border-b border-slate-100 bg-slate-50/70 px-4 py-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                                        <UserCircle className="h-6 w-6" />
-                                    </div>
-
-                                    <div className="min-w-0">
-                                        <p className="truncate text-sm font-semibold text-slate-900">
-                                            {user.name}
-                                        </p>
-
-                                        <p className="truncate text-xs text-slate-500">
-                                            {user.email}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Role */}
-                                <div className="mt-3">
-                                    <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                                        {getRoleLabel(
-                                            user.role
-                                        )}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Logout */}
-                            <div className="p-2">
-                                <button
-                                    type="button"
-                                    onClick={
-                                        handleUserLogout
-                                    }
-                                    disabled={
-                                        logoutLoading
-                                    }
-                                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                    <LogOut className="h-4 w-4 shrink-0" />
-
-                                    <span>
-                                        {logoutLoading
-                                            ? "Signing out..."
-                                            : "Logout"}
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
+                {/* Desktop Sidebar Toggle */}
+                <button
+                    type="button"
+                    onClick={onToggle}
+                    className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-blue-50 hover:text-blue-700 lg:inline-flex"
+                    aria-label={
+                        collapsed
+                            ? "Expand sidebar"
+                            : "Collapse sidebar"
+                    }
+                    title={
+                        collapsed
+                            ? "Expand sidebar"
+                            : "Collapse sidebar"
+                    }
+                >
+                    {collapsed ? (
+                        <PanelRightClose className="h-5 w-5" />
+                    ) : (
+                        <PanelLeftClose className="h-5 w-5" />
                     )}
+                </button>
+
+                {/* Divider */}
+                <div className="hidden h-6 w-px bg-slate-200 sm:block" />
+
+                {/* Active Navigation */}
+                <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-800">
+                        {activeNavigationLabel}
+                    </p>
                 </div>
-            </header>
+            </div>
 
             {/* ================================================== */}
-            {/* LOGOUT ERROR */}
+            {/* RIGHT SIDE - ACTIVE LOCATION */}
             {/* ================================================== */}
 
-            {logoutError && (
-                <div
-                    className="border-b border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 sm:px-6"
-                    role="alert"
-                >
-                    {logoutError}
+            {hasLocationSelector && (
+                <div className="relative ml-3 shrink-0">
+                    <Select
+                        value={activeLocationValue}
+                        onValueChange={
+                            handleLocationChange
+                        }
+                    >
+                        <SelectTrigger
+                            aria-label="Select active location"
+                            title={
+                                activeLocationLabel ||
+                                (
+                                    isBranchCoordinator
+                                        ? "Select branch"
+                                        : "Select warehouse"
+                                )
+                            }
+                            className="h-10 w-auto min-w-0 gap-2 border-0 bg-transparent px-2 text-slate-800 shadow-none hover:bg-blue-50/60 focus:ring-0 focus:ring-offset-0 sm:h-11 sm:px-3"
+                        >
+                            <div className="flex min-w-0 items-center gap-2">
+                                <MapPin className="h-4 w-4 shrink-0 text-slate-500" />
+
+                                <div className="flex min-w-0 items-center gap-1.5">
+                                    <span className="max-w-32 truncate text-sm font-medium text-slate-800 sm:max-w-48">
+                                        {activeLocationName ||
+                                            (
+                                                isBranchCoordinator
+                                                    ? "Select branch"
+                                                    : "Select warehouse"
+                                            )}
+                                    </span>
+
+                                    {activeLocationCode && (
+                                        <>
+                                            <span className="hidden shrink-0 text-slate-300 sm:inline">
+                                                ·
+                                            </span>
+
+                                            <span className="hidden max-w-20 shrink-0 truncate text-xs text-slate-500 sm:inline">
+                                                {activeLocationCode}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </SelectTrigger>
+
+                        <SelectContent
+                            className="z-[70] min-w-[260px] max-w-[calc(100vw-2rem)]"
+                        >
+                            {isBranchCoordinator &&
+                                user.assigned_branches.map(
+                                    (branch) => (
+                                        <SelectItem
+                                            key={
+                                                branch.id
+                                            }
+                                            value={`branch:${branch.id}`}
+                                            className="py-2.5"
+                                        >
+                                            <div className="flex min-w-0 flex-col">
+                                                <span className="truncate font-medium text-slate-800">
+                                                    {
+                                                        branch.name
+                                                    }
+                                                </span>
+
+                                                <span className="mt-0.5 text-xs text-slate-500">
+                                                    {
+                                                        branch.code
+                                                    }
+                                                </span>
+                                            </div>
+                                        </SelectItem>
+                                    )
+                                )}
+
+                            {isWarehouseCoordinator &&
+                                user.assigned_warehouses.map(
+                                    (
+                                        warehouse
+                                    ) => (
+                                        <SelectItem
+                                            key={
+                                                warehouse.id
+                                            }
+                                            value={`warehouse:${warehouse.id}`}
+                                            className="py-2.5"
+                                        >
+                                            <div className="flex min-w-0 flex-col">
+                                                <span className="truncate font-medium text-slate-800">
+                                                    {
+                                                        warehouse.name
+                                                    }
+                                                </span>
+
+                                                <span className="mt-0.5 text-xs text-slate-500">
+                                                    {
+                                                        warehouse.code
+                                                    }
+                                                </span>
+                                            </div>
+                                        </SelectItem>
+                                    )
+                                )}
+                        </SelectContent>
+                    </Select>
                 </div>
             )}
-        </>
+        </header>
     );
 }

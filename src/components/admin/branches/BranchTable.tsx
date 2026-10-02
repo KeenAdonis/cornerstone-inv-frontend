@@ -29,17 +29,10 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
-
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 
 import type {
     Branch,
@@ -68,9 +61,10 @@ interface BranchTableProps {
     onBranchUpdated: () => void;
 }
 
-const BRANCHES_PER_PAGE = 5;
-
-const areaLabels: Record<BranchArea, string> = {
+const areaLabels: Record<
+    BranchArea,
+    string
+> = {
     luzon: "Luzon",
     visayas: "Visayas",
     mindanao: "Mindanao",
@@ -80,26 +74,43 @@ export default function BranchTable({
     branches,
     onBranchUpdated,
 }: BranchTableProps) {
-    const [currentPage, setCurrentPage] =
-        useState(1);
+    const [
+        currentPage,
+        setCurrentPage,
+    ] = useState(1);
+
+    const [
+        pageSize,
+        setPageSize,
+    ] = useState(10);
 
     const [search, setSearch] =
         useState("");
 
     const [area, setArea] =
-        useState<BranchArea | "all">("all");
+        useState<BranchArea | "all">(
+            "all"
+        );
 
     const [status, setStatus] =
-        useState<BranchStatus | "all">("all");
+        useState<BranchStatus | "all">(
+            "all"
+        );
 
-    const [selectedBranch, setSelectedBranch] =
-        useState<Branch | null>(null);
+    const [
+        selectedBranch,
+        setSelectedBranch,
+    ] = useState<Branch | null>(null);
 
-    const [editingBranch, setEditingBranch] =
-        useState<Branch | null>(null);
+    const [
+        editingBranch,
+        setEditingBranch,
+    ] = useState<Branch | null>(null);
 
-    const [deletingBranch, setDeletingBranch] =
-        useState<Branch | null>(null);
+    const [
+        deletingBranch,
+        setDeletingBranch,
+    ] = useState<Branch | null>(null);
 
     const {
         handleToggleBranchStatus,
@@ -107,57 +118,72 @@ export default function BranchTable({
         error: statusError,
     } = useToggleBranchStatus();
 
-    const filteredBranches = useMemo(() => {
-        const normalizedSearch =
-            search.trim().toLowerCase();
+    const filteredBranches =
+        useMemo(() => {
+            const normalizedSearch =
+                search.trim().toLowerCase();
 
-        return branches.filter((branch) => {
-            const matchesSearch =
-                !normalizedSearch ||
-                branch.name
-                    .toLowerCase()
-                    .includes(normalizedSearch) ||
-                branch.code
-                    .toLowerCase()
-                    .includes(normalizedSearch) ||
-                branch.area
-                    .toLowerCase()
-                    .includes(normalizedSearch) ||
-                branch.address
-                    .toLowerCase()
-                    .includes(normalizedSearch);
+            return branches.filter(
+                (branch) => {
+                    const matchesSearch =
+                        !normalizedSearch ||
+                        branch.name
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            ) ||
+                        branch.code
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            ) ||
+                        branch.area
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            ) ||
+                        branch.address
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            );
 
-            const matchesArea =
-                area === "all" ||
-                branch.area === area;
+                    const matchesArea =
+                        area === "all" ||
+                        branch.area === area;
 
-            const matchesStatus =
-                status === "all" ||
-                branch.status === status;
+                    const matchesStatus =
+                        status === "all" ||
+                        branch.status ===
+                            status;
 
-            return (
-                matchesSearch &&
-                matchesArea &&
-                matchesStatus
+                    return (
+                        matchesSearch &&
+                        matchesArea &&
+                        matchesStatus
+                    );
+                }
             );
-        });
-    }, [
-        branches,
-        search,
-        area,
-        status,
-    ]);
+        }, [
+            branches,
+            search,
+            area,
+            status,
+        ]);
 
     const totalPages = Math.ceil(
         filteredBranches.length /
-            BRANCHES_PER_PAGE
+            pageSize
     );
 
     useEffect(() => {
         setCurrentPage((page) =>
             Math.min(
                 Math.max(page, 1),
-                Math.max(totalPages, 1)
+                Math.max(
+                    totalPages,
+                    1
+                )
             )
         );
     }, [totalPages]);
@@ -168,33 +194,18 @@ export default function BranchTable({
         search,
         area,
         status,
+        pageSize,
     ]);
 
     const startIndex =
         (currentPage - 1) *
-        BRANCHES_PER_PAGE;
+        pageSize;
 
     const paginatedBranches =
         filteredBranches.slice(
             startIndex,
-            startIndex +
-                BRANCHES_PER_PAGE
+            startIndex + pageSize
         );
-
-    const goToPreviousPage = () => {
-        setCurrentPage((page) =>
-            Math.max(page - 1, 1)
-        );
-    };
-
-    const goToNextPage = () => {
-        setCurrentPage((page) =>
-            Math.min(
-                page + 1,
-                totalPages
-            )
-        );
-    };
 
     const handleStatusChange = async (
         branchId: number
@@ -218,8 +229,10 @@ export default function BranchTable({
                 area={area}
                 status={status}
                 currentPage={currentPage}
-                itemsPerPage={BRANCHES_PER_PAGE}
-                totalItems={filteredBranches.length}
+                itemsPerPage={pageSize}
+                totalItems={
+                    filteredBranches.length
+                }
                 onSearchChange={setSearch}
                 onAreaChange={setArea}
                 onStatusChange={setStatus}
@@ -236,7 +249,8 @@ export default function BranchTable({
             )}
 
             {/* Table */}
-            {filteredBranches.length === 0 ? (
+            {filteredBranches.length ===
+            0 ? (
                 <div className="px-6 py-12 text-center">
                     <p className="text-sm font-medium text-slate-700">
                         No branches found.
@@ -247,254 +261,245 @@ export default function BranchTable({
                     </p>
                 </div>
             ) : (
-                <Table>
-                    <TableHeader>
-                        <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
-                            <TableHead className="text-blue-900">
-                                Branch Name
-                            </TableHead>
+                <>
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Branch Name
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Code
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Code
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Area
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Area
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Address
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Address
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Status
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Status
+                                </TableHead>
 
-                            <TableHead className="w-16 text-right text-blue-900">
-                                Actions
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
+                                <TableHead className="w-16 whitespace-nowrap text-right text-xs font-semibold text-blue-900">
+                                    Actions
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
 
-                    <TableBody>
-                        {paginatedBranches.map(
-                            (branch) => (
-                                <TableRow
-                                    key={branch.id}
-                                    className="border-slate-200 hover:bg-slate-50"
-                                >
-                                    <TableCell className="font-medium text-slate-900">
-                                        {branch.name}
-                                    </TableCell>
-
-                                    <TableCell className="text-slate-600">
-                                        {branch.code}
-                                    </TableCell>
-
-                                    <TableCell className="text-slate-600">
-                                        {
-                                            areaLabels[
-                                                branch.area
-                                            ]
+                        <TableBody>
+                            {paginatedBranches.map(
+                                (branch) => (
+                                    <TableRow
+                                        key={
+                                            branch.id
                                         }
-                                    </TableCell>
+                                        className="border-slate-200 hover:bg-slate-50"
+                                    >
+                                        <TableCell className="font-medium text-slate-900">
+                                            {
+                                                branch.name
+                                            }
+                                        </TableCell>
 
-                                    <TableCell className="text-slate-600">
-                                        {branch.address}
-                                    </TableCell>
+                                        <TableCell className="text-slate-600">
+                                            {
+                                                branch.code
+                                            }
+                                        </TableCell>
 
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Switch
-                                                checked={
-                                                    branch.status ===
-                                                    "active"
-                                                }
-                                                onCheckedChange={() =>
-                                                    handleStatusChange(
-                                                        branch.id
-                                                    )
-                                                }
-                                                disabled={
-                                                    statusLoading
-                                                }
-                                                aria-label={`Toggle ${branch.name} status`}
-                                            />
+                                        <TableCell className="text-slate-600">
+                                            {
+                                                areaLabels[
+                                                    branch.area
+                                                ]
+                                            }
+                                        </TableCell>
 
-                                            <span className="text-sm capitalize text-slate-600">
-                                                {branch.status}
-                                            </span>
-                                        </div>
-                                    </TableCell>
+                                        <TableCell className="text-slate-600">
+                                            {
+                                                branch.address
+                                            }
+                                        </TableCell>
 
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger
-                                                render={
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-slate-500 hover:bg-blue-50 hover:text-blue-600"
-                                                    />
-                                                }
-                                            >
-                                                <MoreHorizontal className="h-4 w-4" />
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Switch
+                                                    checked={
+                                                        branch.status ===
+                                                        "active"
+                                                    }
+                                                    onCheckedChange={() =>
+                                                        handleStatusChange(
+                                                            branch.id
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        statusLoading
+                                                    }
+                                                    aria-label={`Toggle ${branch.name} status`}
+                                                />
 
-                                                <span className="sr-only">
-                                                    Open actions
+                                                <span className="text-sm capitalize text-slate-600">
+                                                    {
+                                                        branch.status
+                                                    }
                                                 </span>
-                                            </DropdownMenuTrigger>
+                                            </div>
+                                        </TableCell>
 
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        setSelectedBranch(
-                                                            branch
-                                                        )
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger
+                                                    render={
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="text-slate-500 hover:bg-blue-50 hover:text-blue-600"
+                                                        />
                                                     }
                                                 >
-                                                    <Eye className="mr-2 h-4 w-4" />
-                                                    View
-                                                </DropdownMenuItem>
+                                                    <MoreHorizontal className="h-4 w-4" />
 
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        setEditingBranch(
-                                                            branch
-                                                        )
-                                                    }
-                                                >
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Edit
-                                                </DropdownMenuItem>
+                                                    <span className="sr-only">
+                                                        Open actions
+                                                    </span>
+                                                </DropdownMenuTrigger>
 
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        setDeletingBranch(
-                                                            branch
-                                                        )
-                                                    }
-                                                    className="text-red-600 focus:text-red-600"
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    Delete
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            )
-                        )}
-                    </TableBody>
-                </Table>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setSelectedBranch(
+                                                                branch
+                                                            )
+                                                        }
+                                                    >
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        View
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setEditingBranch(
+                                                                branch
+                                                            )
+                                                        }
+                                                    >
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setDeletingBranch(
+                                                                branch
+                                                            )
+                                                        }
+                                                        className="text-red-600 focus:text-red-600"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            )}
+                        </TableBody>
+                    </Table>
+
+                    {/* Pagination */}
+                    <DataTablePagination
+                        currentPage={
+                            currentPage
+                        }
+                        totalPages={
+                            totalPages
+                        }
+                        totalItems={
+                            filteredBranches.length
+                        }
+                        pageSize={
+                            pageSize
+                        }
+                        pageSizeOptions={[
+                            10,
+                            25,
+                            50,
+                            100,
+                        ]}
+                        onPageChange={
+                            setCurrentPage
+                        }
+                        onPageSizeChange={
+                            setPageSize
+                        }
+                    />
+                </>
             )}
 
+            {/* View Branch Dialog */}
             <ViewBranchDialog
                 branch={selectedBranch}
-                open={selectedBranch !== null}
-                onOpenChange={(open) => {
+                open={
+                    selectedBranch !==
+                    null
+                }
+                onOpenChange={(
+                    open
+                ) => {
                     if (!open) {
-                        setSelectedBranch(null);
+                        setSelectedBranch(
+                            null
+                        );
                     }
                 }}
             />
 
+            {/* Edit Branch Dialog */}
             <EditBranchDialog
                 branch={editingBranch}
-                open={editingBranch !== null}
-                onOpenChange={(open) => {
+                open={
+                    editingBranch !== null
+                }
+                onOpenChange={(
+                    open
+                ) => {
                     if (!open) {
-                        setEditingBranch(null);
+                        setEditingBranch(
+                            null
+                        );
                     }
                 }}
-                onUpdated={onBranchUpdated}
+                onUpdated={
+                    onBranchUpdated
+                }
             />
 
+            {/* Delete Branch Dialog */}
             <DeleteBranchDialog
                 branch={deletingBranch}
-                open={deletingBranch !== null}
-                onOpenChange={(open) => {
+                open={
+                    deletingBranch !== null
+                }
+                onOpenChange={(
+                    open
+                ) => {
                     if (!open) {
-                        setDeletingBranch(null);
+                        setDeletingBranch(
+                            null
+                        );
                     }
                 }}
-                onDeleted={onBranchUpdated}
+                onDeleted={
+                    onBranchUpdated
+                }
             />
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="border-t border-blue-100 bg-white px-4 py-3">
-                    <Pagination>
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-                                        goToPreviousPage();
-                                    }}
-                                    aria-disabled={
-                                        currentPage === 1
-                                    }
-                                    className={
-                                        currentPage === 1
-                                            ? "pointer-events-none opacity-50"
-                                            : ""
-                                    }
-                                />
-                            </PaginationItem>
-
-                            {Array.from(
-                                {
-                                    length: totalPages,
-                                },
-                                (_, index) =>
-                                    index + 1
-                            ).map((page) => (
-                                <PaginationItem
-                                    key={page}
-                                >
-                                    <PaginationLink
-                                        href="#"
-                                        isActive={
-                                            page ===
-                                            currentPage
-                                        }
-                                        onClick={(event) => {
-                                            event.preventDefault();
-                                            setCurrentPage(
-                                                page
-                                            );
-                                        }}
-                                    >
-                                        {page}
-                                    </PaginationLink>
-                                </PaginationItem>
-                            ))}
-
-                            <PaginationItem>
-                                <PaginationNext
-                                    href="#"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-                                        goToNextPage();
-                                    }}
-                                    aria-disabled={
-                                        currentPage ===
-                                        totalPages
-                                    }
-                                    className={
-                                        currentPage ===
-                                        totalPages
-                                            ? "pointer-events-none opacity-50"
-                                            : ""
-                                    }
-                                />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                </div>
-            )}
         </div>
     );
 }

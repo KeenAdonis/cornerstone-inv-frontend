@@ -29,17 +29,12 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
-
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+
+import {
+    DataTablePagination,
+} from "@/components/ui/data-table-pagination";
 
 import type {
     Category,
@@ -62,8 +57,6 @@ interface CategoryTableProps {
     onCategoryUpdated: () => void;
 }
 
-const CATEGORIES_PER_PAGE = 5;
-
 export default function CategoryTable({
     categories,
     onCategoryUpdated,
@@ -71,11 +64,16 @@ export default function CategoryTable({
     const [currentPage, setCurrentPage] =
         useState(1);
 
+    const [pageSize, setPageSize] =
+        useState(10);
+
     const [search, setSearch] =
         useState("");
 
     const [status, setStatus] =
-        useState<CategoryStatus | "all">("all");
+        useState<CategoryStatus | "all">(
+            "all"
+        );
 
     const [selectedCategory, setSelectedCategory] =
         useState<Category | null>(null);
@@ -92,45 +90,59 @@ export default function CategoryTable({
         error: statusError,
     } = useToggleCategoryStatus();
 
-    const filteredCategories = useMemo(() => {
-        const normalizedSearch =
-            search.trim().toLowerCase();
+    const filteredCategories =
+        useMemo(() => {
+            const normalizedSearch =
+                search.trim().toLowerCase();
 
-        return categories.filter((category) => {
-            const matchesSearch =
-                !normalizedSearch ||
-                category.name
-                    .toLowerCase()
-                    .includes(normalizedSearch) ||
-                (category.description ?? "")
-                    .toLowerCase()
-                    .includes(normalizedSearch);
+            return categories.filter(
+                (category) => {
+                    const matchesSearch =
+                        !normalizedSearch ||
+                        category.name
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            ) ||
+                        (
+                            category.description ??
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            );
 
-            const matchesStatus =
-                status === "all" ||
-                category.status === status;
+                    const matchesStatus =
+                        status === "all" ||
+                        category.status ===
+                            status;
 
-            return (
-                matchesSearch &&
-                matchesStatus
+                    return (
+                        matchesSearch &&
+                        matchesStatus
+                    );
+                }
             );
-        });
-    }, [
-        categories,
-        search,
-        status,
-    ]);
+        }, [
+            categories,
+            search,
+            status,
+        ]);
 
     const totalPages = Math.ceil(
         filteredCategories.length /
-            CATEGORIES_PER_PAGE
+            pageSize
     );
 
     useEffect(() => {
         setCurrentPage((page) =>
             Math.min(
                 Math.max(page, 1),
-                Math.max(totalPages, 1)
+                Math.max(
+                    totalPages,
+                    1
+                )
             )
         );
     }, [totalPages]);
@@ -140,33 +152,18 @@ export default function CategoryTable({
     }, [
         search,
         status,
+        pageSize,
     ]);
 
     const startIndex =
         (currentPage - 1) *
-        CATEGORIES_PER_PAGE;
+        pageSize;
 
     const paginatedCategories =
         filteredCategories.slice(
             startIndex,
-            startIndex +
-                CATEGORIES_PER_PAGE
+            startIndex + pageSize
         );
-
-    const goToPreviousPage = () => {
-        setCurrentPage((page) =>
-            Math.max(page - 1, 1)
-        );
-    };
-
-    const goToNextPage = () => {
-        setCurrentPage((page) =>
-            Math.min(
-                page + 1,
-                totalPages
-            )
-        );
-    };
 
     const handleStatusChange = async (
         categoryId: number
@@ -187,8 +184,10 @@ export default function CategoryTable({
                 search={search}
                 status={status}
                 currentPage={currentPage}
-                itemsPerPage={CATEGORIES_PER_PAGE}
-                totalItems={filteredCategories.length}
+                itemsPerPage={pageSize}
+                totalItems={
+                    filteredCategories.length
+                }
                 onSearchChange={setSearch}
                 onStatusChange={setStatus}
             />
@@ -204,7 +203,8 @@ export default function CategoryTable({
             )}
 
             {/* Table */}
-            {filteredCategories.length === 0 ? (
+            {filteredCategories.length ===
+            0 ? (
                 <div className="px-6 py-12 text-center">
                     <p className="text-sm font-medium text-slate-700">
                         No categories found.
@@ -215,237 +215,210 @@ export default function CategoryTable({
                     </p>
                 </div>
             ) : (
-                <Table>
-                    <TableHeader>
-                        <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
-                            <TableHead className="text-blue-900">
-                                Category Name
-                            </TableHead>
+                <>
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Category Name
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Description
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Description
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Status
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Status
+                                </TableHead>
 
-                            <TableHead className="w-16 text-right text-blue-900">
-                                Actions
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
+                                <TableHead className="w-16 whitespace-nowrap text-right text-xs font-semibold text-blue-900">
+                                    Actions
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
 
-                    <TableBody>
-                        {paginatedCategories.map(
-                            (category) => (
-                                <TableRow
-                                    key={category.id}
-                                    className="border-slate-200 hover:bg-slate-50"
-                                >
-                                    <TableCell className="font-medium text-slate-900">
-                                        {category.name}
-                                    </TableCell>
+                        <TableBody>
+                            {paginatedCategories.map(
+                                (category) => (
+                                    <TableRow
+                                        key={
+                                            category.id
+                                        }
+                                        className="border-slate-200 hover:bg-slate-50"
+                                    >
+                                        <TableCell className="font-medium text-slate-900">
+                                            {
+                                                category.name
+                                            }
+                                        </TableCell>
 
-                                    <TableCell className="max-w-md text-slate-600">
-                                        <span className="line-clamp-2">
-                                            {category.description ||
-                                                "No description provided."}
-                                        </span>
-                                    </TableCell>
-
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Switch
-                                                checked={
-                                                    category.status ===
-                                                    "active"
-                                                }
-                                                onCheckedChange={() =>
-                                                    handleStatusChange(
-                                                        category.id
-                                                    )
-                                                }
-                                                disabled={
-                                                    statusLoading
-                                                }
-                                                aria-label={`Toggle ${category.name} status`}
-                                            />
-
-                                            <span className="text-sm capitalize text-slate-600">
-                                                {category.status}
+                                        <TableCell className="max-w-md text-slate-600">
+                                            <span className="line-clamp-2">
+                                                {category.description ||
+                                                    "No description provided."}
                                             </span>
-                                        </div>
-                                    </TableCell>
+                                        </TableCell>
 
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger
-                                                render={
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-slate-500 hover:bg-blue-50 hover:text-blue-600"
-                                                    />
-                                                }
-                                            >
-                                                <MoreHorizontal className="h-4 w-4" />
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Switch
+                                                    checked={
+                                                        category.status ===
+                                                        "active"
+                                                    }
+                                                    onCheckedChange={() =>
+                                                        handleStatusChange(
+                                                            category.id
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        statusLoading
+                                                    }
+                                                    aria-label={`Toggle ${category.name} status`}
+                                                />
 
-                                                <span className="sr-only">
-                                                    Open actions
+                                                <span className="text-sm capitalize text-slate-600">
+                                                    {
+                                                        category.status
+                                                    }
                                                 </span>
-                                            </DropdownMenuTrigger>
+                                            </div>
+                                        </TableCell>
 
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        setSelectedCategory(
-                                                            category
-                                                        )
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger
+                                                    render={
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="text-slate-500 hover:bg-blue-50 hover:text-blue-600"
+                                                        />
                                                     }
                                                 >
-                                                    <Eye className="mr-2 h-4 w-4" />
-                                                    View
-                                                </DropdownMenuItem>
+                                                    <MoreHorizontal className="h-4 w-4" />
 
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        setEditingCategory(
-                                                            category
-                                                        )
-                                                    }
-                                                >
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Edit
-                                                </DropdownMenuItem>
+                                                    <span className="sr-only">
+                                                        Open actions
+                                                    </span>
+                                                </DropdownMenuTrigger>
 
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        setDeletingCategory(
-                                                            category
-                                                        )
-                                                    }
-                                                    className="text-red-600 focus:text-red-600"
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    Delete
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            )
-                        )}
-                    </TableBody>
-                </Table>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setSelectedCategory(
+                                                                category
+                                                            )
+                                                        }
+                                                    >
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        View
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setEditingCategory(
+                                                                category
+                                                            )
+                                                        }
+                                                    >
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setDeletingCategory(
+                                                                category
+                                                            )
+                                                        }
+                                                        className="text-red-600 focus:text-red-600"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            )}
+                        </TableBody>
+                    </Table>
+
+                    <DataTablePagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalItems={
+                            filteredCategories.length
+                        }
+                        pageSize={pageSize}
+                        pageSizeOptions={[
+                            10,
+                            25,
+                            50,
+                            100,
+                        ]}
+                        onPageChange={
+                            setCurrentPage
+                        }
+                        onPageSizeChange={
+                            setPageSize
+                        }
+                    />
+                </>
             )}
 
+            {/* View Category */}
             <ViewCategoryDialog
                 category={selectedCategory}
-                open={selectedCategory !== null}
+                open={
+                    selectedCategory !== null
+                }
                 onOpenChange={(open) => {
                     if (!open) {
-                        setSelectedCategory(null);
+                        setSelectedCategory(
+                            null
+                        );
                     }
                 }}
             />
 
+            {/* Edit Category */}
             <EditCategoryDialog
                 category={editingCategory}
-                open={editingCategory !== null}
+                open={
+                    editingCategory !== null
+                }
                 onOpenChange={(open) => {
                     if (!open) {
-                        setEditingCategory(null);
+                        setEditingCategory(
+                            null
+                        );
                     }
                 }}
-                onUpdated={onCategoryUpdated}
+                onUpdated={
+                    onCategoryUpdated
+                }
             />
 
+            {/* Delete Category */}
             <DeleteCategoryDialog
                 category={deletingCategory}
-                open={deletingCategory !== null}
+                open={
+                    deletingCategory !== null
+                }
                 onOpenChange={(open) => {
                     if (!open) {
-                        setDeletingCategory(null);
+                        setDeletingCategory(
+                            null
+                        );
                     }
                 }}
-                onDeleted={onCategoryUpdated}
+                onDeleted={
+                    onCategoryUpdated
+                }
             />
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="border-t border-blue-100 bg-white px-4 py-3">
-                    <Pagination>
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-                                        goToPreviousPage();
-                                    }}
-                                    aria-disabled={
-                                        currentPage === 1
-                                    }
-                                    className={
-                                        currentPage === 1
-                                            ? "pointer-events-none opacity-50"
-                                            : ""
-                                    }
-                                />
-                            </PaginationItem>
-
-                            {Array.from(
-                                {
-                                    length: totalPages,
-                                },
-                                (_, index) =>
-                                    index + 1
-                            ).map((page) => (
-                                <PaginationItem
-                                    key={page}
-                                >
-                                    <PaginationLink
-                                        href="#"
-                                        isActive={
-                                            page ===
-                                            currentPage
-                                        }
-                                        onClick={(event) => {
-                                            event.preventDefault();
-                                            setCurrentPage(
-                                                page
-                                            );
-                                        }}
-                                    >
-                                        {page}
-                                    </PaginationLink>
-                                </PaginationItem>
-                            ))}
-
-                            <PaginationItem>
-                                <PaginationNext
-                                    href="#"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-                                        goToNextPage();
-                                    }}
-                                    aria-disabled={
-                                        currentPage ===
-                                        totalPages
-                                    }
-                                    className={
-                                        currentPage ===
-                                        totalPages
-                                            ? "pointer-events-none opacity-50"
-                                            : ""
-                                    }
-                                />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                </div>
-            )}
         </div>
     );
 }

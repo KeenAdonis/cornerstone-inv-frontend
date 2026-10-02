@@ -11,6 +11,8 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+
 import {
     Dialog,
     DialogContent,
@@ -264,8 +266,8 @@ export default function StockInDialog({
                 handleOpenChange
             }
         >
-            <DialogContent className="border-blue-100 bg-white text-slate-900 sm:max-w-2xl">
-                <DialogHeader className="border-b border-blue-100 pb-4">
+            <DialogContent className="flex max-h-[94vh] flex-col border-blue-100 bg-white text-slate-900 sm:max-w-2xl">
+                <DialogHeader className="shrink-0 border-b border-blue-100 pb-4">
                     <DialogTitle className="text-slate-900">
                         Stock In
                     </DialogTitle>
@@ -277,10 +279,9 @@ export default function StockInDialog({
                 </DialogHeader>
 
                 <form
-                    onSubmit={
-                        handleSubmit
-                    }
-                    className="space-y-5"
+                    id="stock-in-form"
+                    onSubmit={handleSubmit}
+                    className="min-h-0 flex-1 space-y-5 overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
                     {error && (
                         <div
@@ -309,32 +310,15 @@ export default function StockInDialog({
                             Received Date & Time
                         </label>
 
-                        <Input
-                            id="stock-in-received-at"
-                            type="datetime-local"
-                            value={
-                                formData.received_at
+                        <DateTimePicker
+                            value={formData.received_at}
+                            onChange={(value) =>
+                                setFormData((current) => ({
+                                    ...current,
+                                    received_at: value,
+                                }))
                             }
-                            onChange={(
-                                event
-                            ) =>
-                                setFormData(
-                                    (
-                                        current
-                                    ) => ({
-                                        ...current,
-                                        received_at:
-                                            event
-                                                .target
-                                                .value,
-                                    })
-                                )
-                            }
-                            required
-                            disabled={
-                                loading
-                            }
-                            className="border-slate-200 bg-white text-slate-900 focus-visible:border-blue-400 focus-visible:ring-blue-100"
+                            disabled={loading}
                         />
                     </div>
 
@@ -589,40 +573,40 @@ export default function StockInDialog({
                             className="flex w-full resize-none rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 transition focus:border-blue-400 focus:ring-1 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
                         />
                     </div>
-
-                    <DialogFooter className="border-t border-blue-100 bg-blue-50/60 pt-5">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() =>
-                                handleOpenChange(
-                                    false
-                                )
-                            }
-                            disabled={
-                                loading
-                            }
-                            className="border-slate-200 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-                        >
-                            Cancel
-                        </Button>
-
-                        <Button
-                            type="submit"
-                            disabled={
-                                loading ||
-                                productsLoading ||
-                                activeProducts.length ===
-                                    0
-                            }
-                            className="bg-blue-600 text-white shadow-sm hover:bg-blue-700"
-                        >
-                            {loading
-                                ? "Receiving..."
-                                : "Receive Stock"}
-                        </Button>
-                    </DialogFooter>
                 </form>
+
+                <DialogFooter className="shrink-0 border-t border-blue-100 bg-blue-50/60 pt-5">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() =>
+                            handleOpenChange(
+                                false
+                            )
+                        }
+                        disabled={
+                            loading
+                        }
+                        className="border-slate-200 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        form="stock-in-form"
+                        disabled={
+                            loading ||
+                            productsLoading ||
+                            activeProducts.length ===
+                                0
+                        }
+                        className="bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+                    >
+                        {loading
+                            ? "Receiving..."
+                            : "Receive Stock"}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

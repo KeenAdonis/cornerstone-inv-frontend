@@ -172,7 +172,9 @@ export default function CreatePurchaseOrderDialog({
         index: number
     ) => {
         setFormData((current) => {
-            if (current.items.length === 1) {
+            if (
+                current.items.length === 1
+            ) {
                 return current;
             }
 
@@ -191,8 +193,11 @@ export default function CreatePurchaseOrderDialog({
     ) => {
         setFormData((current) => ({
             ...current,
-            warehouse_id: value ?? "",
+            warehouse_id:
+                value ?? "",
         }));
+
+        setValidationError(null);
     };
 
     const isProductSelected = (
@@ -202,7 +207,8 @@ export default function CreatePurchaseOrderDialog({
         return formData.items.some(
             (item, index) =>
                 index !== currentIndex &&
-                item.product_id === productId
+                item.product_id ===
+                    productId
         );
     };
 
@@ -217,7 +223,7 @@ export default function CreatePurchaseOrderDialog({
             setValidationError(
                 "No active branch is selected."
             );
-        
+
             return;
         }
 
@@ -233,7 +239,8 @@ export default function CreatePurchaseOrderDialog({
             formData.items.filter(
                 (item) =>
                     item.product_id &&
-                    Number(item.quantity) > 0
+                    Number(item.quantity) >
+                        0
             );
 
         if (
@@ -269,12 +276,12 @@ export default function CreatePurchaseOrderDialog({
             {
                 branch_id:
                     activeBranchId,
-            
+
                 warehouse_id:
                     Number(
                         formData.warehouse_id
                     ),
-                
+
                 items: validItems.map(
                     (item) => ({
                         product_id:
@@ -337,8 +344,9 @@ export default function CreatePurchaseOrderDialog({
                 handleOpenChange
             }
         >
-            <DialogContent className="border-blue-100 bg-white text-slate-900 sm:max-w-2xl">
-                <DialogHeader className="border-b border-blue-100 pb-4">
+            <DialogContent className="flex max-h-[94vh] flex-col border-blue-100 bg-white text-slate-900 sm:max-w-2xl">
+                {/* Header */}
+                <DialogHeader className="shrink-0 border-b border-blue-100 pb-4">
                     <DialogTitle className="text-slate-900">
                         Create Purchase Order
                     </DialogTitle>
@@ -348,12 +356,15 @@ export default function CreatePurchaseOrderDialog({
                     </DialogDescription>
                 </DialogHeader>
 
+                {/* Scrollable Form */}
                 <form
+                    id="create-purchase-order-form"
                     onSubmit={
                         handleSubmit
                     }
-                    className="space-y-5"
+                    className="min-h-0 flex-1 space-y-5 overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
+                    {/* Errors */}
                     {(error ||
                         productsError ||
                         warehousesError ||
@@ -394,7 +405,9 @@ export default function CreatePurchaseOrderDialog({
                                 className="w-full border-slate-200 bg-white text-slate-900 focus:ring-blue-100"
                             >
                                 <SelectValue>
-                                    {(value: string | null) => {
+                                    {(
+                                        value: string | null
+                                    ) => {
                                         const selectedWarehouse =
                                             activeWarehouses.find(
                                                 (
@@ -454,7 +467,7 @@ export default function CreatePurchaseOrderDialog({
 
                     {/* Products */}
                     <div className="space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <label className="text-sm font-medium text-slate-700">
                                     Products
@@ -464,28 +477,6 @@ export default function CreatePurchaseOrderDialog({
                                     Add the products and quantities requested from the warehouse.
                                 </p>
                             </div>
-
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={
-                                    addItem
-                                }
-                                disabled={
-                                    isLoading ||
-                                    !activeBranchId ||
-                                    activeProducts.length ===
-                                        0 ||
-                                    activeWarehouses.length ===
-                                        0
-                                }
-                                className="border-blue-200 bg-white text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                            >
-                                <Plus className="mr-1.5 h-4 w-4" />
-
-                                Add Product
-                            </Button>
                         </div>
 
                         <div className="space-y-3">
@@ -539,7 +530,9 @@ export default function CreatePurchaseOrderDialog({
                                                                     : "Select product"
                                                             }
                                                         >
-                                                            {(value: string | null) => {
+                                                            {(
+                                                                value: string | null
+                                                            ) => {
                                                                 const selectedProduct =
                                                                     activeProducts.find(
                                                                         (
@@ -656,6 +649,25 @@ export default function CreatePurchaseOrderDialog({
                             )}
                         </div>
 
+                        <div className="flex justify-end pt-1">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={addItem}
+                                disabled={
+                                    isLoading ||
+                                    !activeBranchId ||
+                                    activeProducts.length === 0 ||
+                                    activeWarehouses.length === 0
+                                }
+                                className="w-full border-blue-200 bg-white text-blue-600 hover:bg-blue-50 hover:text-blue-700 sm:w-auto"
+                            >
+                                <Plus className="mr-1.5 h-4 w-4" />
+                                Add Product
+                            </Button>
+                        </div>
+
                         {activeProducts.length ===
                             0 &&
                             !productsLoading && (
@@ -701,42 +713,43 @@ export default function CreatePurchaseOrderDialog({
                             className="flex w-full resize-none rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 transition focus:border-blue-400 focus:ring-1 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
                         />
                     </div>
-
-                    {/* Footer */}
-                    <DialogFooter className="border-t border-blue-100 bg-blue-50/60 pt-5">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() =>
-                                handleOpenChange(
-                                    false
-                                )
-                            }
-                            disabled={
-                                loading
-                            }
-                            className="border-slate-200 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-                        >
-                            Cancel
-                        </Button>
-
-                        <Button
-                            type="submit"
-                            disabled={
-                                isLoading ||
-                                activeProducts.length ===
-                                    0 ||
-                                activeWarehouses.length ===
-                                    0
-                            }
-                            className="bg-blue-600 text-white shadow-sm hover:bg-blue-700"
-                        >
-                            {loading
-                                ? "Submitting..."
-                                : "Submit Purchase Order"}
-                        </Button>
-                    </DialogFooter>
                 </form>
+
+                {/* Fixed Footer */}
+                <DialogFooter className="shrink-0 border-t border-blue-100 bg-blue-50/60 pt-5">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() =>
+                            handleOpenChange(
+                                false
+                            )
+                        }
+                        disabled={
+                            loading
+                        }
+                        className="w-full border-slate-200 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-700 sm:w-auto"
+                    >
+                        Cancel
+                    </Button>
+
+                    <Button
+                        type="submit"
+                        form="create-purchase-order-form"
+                        disabled={
+                            isLoading ||
+                            activeProducts.length ===
+                                0 ||
+                            activeWarehouses.length ===
+                                0
+                        }
+                        className="w-full bg-blue-600 text-white shadow-sm hover:bg-blue-700 sm:w-auto"
+                    >
+                        {loading
+                            ? "Submitting..."
+                            : "Submit Purchase Order"}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

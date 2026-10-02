@@ -5,9 +5,8 @@ import { usePathname } from "next/navigation";
 
 import {
     Boxes,
-    ChevronLeft,
-    ChevronRight,
-    MapPin,
+    LogOut,
+    UserCircle,
     X,
 } from "lucide-react";
 
@@ -16,18 +15,7 @@ import {
 } from "@/src/config/navigation";
 
 import { useAuth } from "@/src/hooks/useAuth";
-
-import {
-    useActiveLocationContext,
-} from "@/src/context/ActiveLocationContext";
-
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { useLogout } from "@/src/hooks/useLogout";
 
 interface AppSidebarProps {
     collapsed: boolean;
@@ -50,10 +38,10 @@ export default function AppSidebar({
     } = useAuth();
 
     const {
-        activeLocation,
-        setLocation,
-        initialized,
-    } = useActiveLocationContext();
+        handleLogout,
+        loading: logoutLoading,
+        error: logoutError,
+    } = useLogout();
 
     const navigationItems =
         user
@@ -71,112 +59,44 @@ export default function AppSidebar({
 
     /*
      * ============================================================
-     * ACTIVE LOCATION
+     * USER ROLE LABEL
      * ============================================================
      */
 
-    const isBranchCoordinator =
-        user?.role ===
-        "branch_coordinator";
+    const getRoleLabel = (
+        role: string
+    ): string => {
+        const roleLabels: Record<
+            string,
+            string
+        > = {
+            admin: "Administrator",
+            branch_coordinator:
+                "Branch Coordinator",
+            warehouse_coordinator:
+                "Warehouse Coordinator",
+            superadmin:
+                "Super Administrator",
+        };
 
-    const isWarehouseCoordinator =
-        user?.role ===
-        "warehouse_coordinator";
-
-    const activeBranch =
-        isBranchCoordinator &&
-        activeLocation?.type ===
-            "branch"
-            ? user.assigned_branches.find(
-                  (branch) =>
-                      branch.id ===
-                      activeLocation.id
-              )
-            : null;
-
-    const activeWarehouse =
-        isWarehouseCoordinator &&
-        activeLocation?.type ===
-            "warehouse"
-            ? user.assigned_warehouses.find(
-                  (warehouse) =>
-                      warehouse.id ===
-                      activeLocation.id
-              )
-            : null;
-
-    const activeLocationValue =
-        activeLocation
-            ? `${activeLocation.type}:${activeLocation.id}`
-            : "";
-
-    const hasLocationSelector =
-        initialized &&
-        (
-            (
-                isBranchCoordinator &&
-                user.assigned_branches.length >
-                    0
-            ) ||
-            (
-                isWarehouseCoordinator &&
-                user.assigned_warehouses.length >
-                    0
-            )
+        return (
+            roleLabels[role] ??
+            role
+                .replaceAll("_", " ")
+                .replace(/\b\w/g, (char) =>
+                    char.toUpperCase()
+                )
         );
-
-    const activeLocationName =
-        activeBranch?.name ??
-        activeWarehouse?.name ??
-        "";
-
-    const activeLocationCode =
-        activeBranch?.code ??
-        activeWarehouse?.code ??
-        "";
-
-    const activeLocationLabel =
-        activeLocationName
-            ? `${activeLocationName} · ${activeLocationCode}`
-            : "";
+    };
 
     /*
      * ============================================================
-     * LOCATION CHANGE
+     * LOGOUT
      * ============================================================
      */
 
-    function handleLocationChange(
-        value: string | null
-    ) {
-        if (!value) {
-            return;
-        }
-
-        const [
-            type,
-            id,
-        ] = value.split(":");
-
-        const locationId =
-            Number(id);
-
-        if (
-            (
-                type !== "branch" &&
-                type !== "warehouse"
-            ) ||
-            !Number.isInteger(
-                locationId
-            )
-        ) {
-            return;
-        }
-
-        setLocation({
-            type,
-            id: locationId,
-        });
+    async function handleUserLogout() {
+        await handleLogout();
     }
 
     return (
@@ -235,13 +155,13 @@ export default function AppSidebar({
                             <p className="truncate text-sm font-bold uppercase tracking-tight text-slate-900">
                                 Cornerstone Multi Sales
                             </p>
-                        
+
                             <p className="mt-0.5 truncate text-[10px] font-medium uppercase tracking-wide text-slate-400">
                                 Inventory System Workflow
                             </p>
                         </div>
                     </Link>
-                        
+
                     <button
                         type="button"
                         onClick={onMobileClose}
@@ -251,125 +171,6 @@ export default function AppSidebar({
                         <X className="h-5 w-5" />
                     </button>
                 </div>
-
-                {/* ================================================== */}
-                {/* ACTIVE LOCATION */}
-                {/* ================================================== */}
-
-                {hasLocationSelector && (
-                    <div className="shrink-0 border-b border-slate-100 p-3">
-                        <Select
-                            value={activeLocationValue}
-                            onValueChange={handleLocationChange}
-                        >
-                            <SelectTrigger
-                                aria-label="Select active location"
-                                title={
-                                    activeLocationLabel ||
-                                    (
-                                        isBranchCoordinator
-                                            ? "Select branch"
-                                            : "Select warehouse"
-                                    )
-                                }
-                                className={[
-                                    "h-11 min-w-0 border-0 bg-transparent p-0 text-sm text-slate-800 shadow-none",
-                                    "hover:bg-transparent",
-                                    "focus:ring-0",
-                                    "focus:ring-offset-0",
-                                    "[&>svg:last-child]:shrink-0",
-                                    collapsed
-                                        ? "w-full justify-center [&>svg:last-child]:hidden"
-                                        : "w-full",
-                                ].join(" ")}
-                            >
-                                {collapsed ? (
-                                    <div
-                                        className={[
-                                            "flex h-11 w-full items-center justify-center rounded-lg transition",
-                                            "text-slate-500 hover:bg-blue-50 hover:text-blue-700",
-                                        ].join(" ")}
-                                    >
-                                        <MapPin className="h-5 w-5" />
-                                    </div>
-                                ) : (
-                                    <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2.5 transition hover:bg-blue-50/60">
-                                        <MapPin className="h-4 w-4 shrink-0 text-slate-400" />
-                                
-                                        <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                                            <span className="min-w-0 flex-1 truncate font-medium text-slate-800">
-                                                {activeLocationName ||
-                                                    (
-                                                        isBranchCoordinator
-                                                            ? "Select branch"
-                                                            : "Select warehouse"
-                                                    )}
-                                            </span>
-                                                
-                                            {activeLocationCode && (
-                                                <>
-                                                    <span className="shrink-0 text-slate-300">
-                                                        ·
-                                                    </span>
-                                            
-                                                    <span className="max-w-20 shrink-0 truncate text-xs text-slate-500">
-                                                        {activeLocationCode}
-                                                    </span>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </SelectTrigger>
-                            
-                            <SelectContent
-                                className="z-[70] min-w-[260px] max-w-[calc(100vw-2rem)]"
-                            >
-                                {isBranchCoordinator &&
-                                    user.assigned_branches.map(
-                                        (branch) => (
-                                            <SelectItem
-                                                key={branch.id}
-                                                value={`branch:${branch.id}`}
-                                                className="py-2.5"
-                                            >
-                                                <div className="flex min-w-0 flex-col">
-                                                    <span className="truncate font-medium text-slate-800">
-                                                        {branch.name}
-                                                    </span>
-                                        
-                                                    <span className="mt-0.5 text-xs text-slate-500">
-                                                        {branch.code}
-                                                    </span>
-                                                </div>
-                                            </SelectItem>
-                                        )
-                                    )}
-
-                                {isWarehouseCoordinator &&
-                                    user.assigned_warehouses.map(
-                                        (warehouse) => (
-                                            <SelectItem
-                                                key={warehouse.id}
-                                                value={`warehouse:${warehouse.id}`}
-                                                className="py-2.5"
-                                            >
-                                                <div className="flex min-w-0 flex-col">
-                                                    <span className="truncate font-medium text-slate-800">
-                                                        {warehouse.name}
-                                                    </span>
-                                        
-                                                    <span className="mt-0.5 text-xs text-slate-500">
-                                                        {warehouse.code}
-                                                    </span>
-                                                </div>
-                                            </SelectItem>
-                                        )
-                                    )}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                )}
 
                 {/* ================================================== */}
                 {/* NAVIGATION */}
@@ -441,6 +242,110 @@ export default function AppSidebar({
                     )}
                 </nav>
 
+                {/* ================================================== */}
+                {/* USER PROFILE */}
+                {/* ================================================== */}
+
+                {user && (
+                    <div className="shrink-0 border-t border-slate-200 bg-slate-50/60 p-3">
+                        {logoutError && (
+                            <div
+                                className={[
+                                    "mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-600",
+                                    collapsed
+                                        ? "lg:hidden"
+                                        : "",
+                                ].join(" ")}
+                                role="alert"
+                            >
+                                {logoutError}
+                            </div>
+                        )}
+
+                        {collapsed ? (
+                            /* ================================================== */
+                            /* COLLAPSED PROFILE */
+                            /* ================================================== */
+
+                            <div className="flex flex-col items-center gap-2">
+                                <div
+                                    className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600"
+                                    title={user.name}
+                                >
+                                    <UserCircle className="h-6 w-6" />
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={
+                                        handleUserLogout
+                                    }
+                                    disabled={
+                                        logoutLoading
+                                    }
+                                    className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                    aria-label="Logout"
+                                    title={
+                                        logoutLoading
+                                            ? "Signing out..."
+                                            : "Logout"
+                                    }
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                </button>
+                            </div>
+                        ) : (
+                            /* ================================================== */
+                            /* EXPANDED PROFILE */
+                            /* ================================================== */
+
+                            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                                        <UserCircle className="h-6 w-6" />
+                                    </div>
+
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-semibold text-slate-900">
+                                            {user.name}
+                                        </p>
+
+                                        <p className="truncate text-xs text-slate-500">
+                                            {user.email}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-3">
+                                    <span className="inline-flex max-w-full truncate rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                                        {getRoleLabel(
+                                            user.role
+                                        )}
+                                    </span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={
+                                        handleUserLogout
+                                    }
+                                    disabled={
+                                        logoutLoading
+                                    }
+                                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    <LogOut className="h-4 w-4 shrink-0" />
+
+                                    <span>
+                                        {logoutLoading
+                                            ? "Signing out..."
+                                            : "Logout"}
+                                    </span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </aside>
         </>
     );

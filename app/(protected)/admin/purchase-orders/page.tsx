@@ -86,6 +86,9 @@ export default function PurchaseOrdersPage() {
                     purchaseOrders={
                         purchaseOrders
                     }
+                    onUpdated={
+                        refetch
+                    }
                     onView={
                         setSelectedPurchaseOrder
                     }

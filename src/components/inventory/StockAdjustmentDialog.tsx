@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { Input } from "@/components/ui/input";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 import {
     Select,
@@ -456,8 +457,8 @@ export default function StockAdjustmentDialog({
                 handleOpenChange
             }
         >
-            <DialogContent className="border-blue-100 bg-white text-slate-900 sm:max-w-2xl">
-                <DialogHeader className="border-b border-blue-100 pb-4">
+            <DialogContent className="flex max-h-[94vh] flex-col border-blue-100 bg-white text-slate-900 sm:max-w-2xl">
+                <DialogHeader className="shrink-0 border-b border-blue-100 pb-4">
                     <DialogTitle className="text-slate-900">
                         Stock Adjustment
                     </DialogTitle>
@@ -470,10 +471,9 @@ export default function StockAdjustmentDialog({
                 </DialogHeader>
 
                 <form
-                    onSubmit={
-                        handleSubmit
-                    }
-                    className="space-y-5"
+                    id="stock-adjustment-form"
+                    onSubmit={handleSubmit}
+                    className="min-h-0 flex-1 space-y-5 overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
                     {(error ||
                         productsDataError ||
@@ -548,32 +548,15 @@ export default function StockAdjustmentDialog({
                                 Adjustment Date & Time
                             </label>
 
-                            <Input
-                                id="stock-adjustment-adjusted-at"
-                                type="datetime-local"
-                                value={
-                                    formData.adjusted_at
+                            <DateTimePicker
+                                value={formData.adjusted_at}
+                                onChange={(value) =>
+                                    setFormData((current) => ({
+                                        ...current,
+                                        adjusted_at: value,
+                                    }))
                                 }
-                                onChange={(
-                                    event
-                                ) =>
-                                    setFormData(
-                                        (
-                                            current
-                                        ) => ({
-                                            ...current,
-                                            adjusted_at:
-                                                event
-                                                    .target
-                                                    .value,
-                                        })
-                                    )
-                                }
-                                required
-                                disabled={
-                                    loading
-                                }
-                                className="border-slate-200 bg-white text-slate-900 focus-visible:border-blue-400 focus-visible:ring-blue-100"
+                                disabled={loading}
                             />
                         </div>
                     </div>
@@ -901,40 +884,39 @@ export default function StockAdjustmentDialog({
                             className="flex w-full resize-none rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 transition focus:border-blue-400 focus:ring-1 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
                         />
                     </div>
-
-                    <DialogFooter className="border-t border-blue-100 bg-blue-50/60 pt-5">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() =>
-                                handleOpenChange(
-                                    false
-                                )
-                            }
-                            disabled={
-                                loading
-                            }
-                            className="border-slate-200 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-                        >
-                            Cancel
-                        </Button>
-
-                        <Button
-                            type="submit"
-                            disabled={
-                                loading ||
-                                productsDataLoading ||
-                                selectableProducts.length ===
-                                    0
-                            }
-                            className="bg-blue-600 text-white shadow-sm hover:bg-blue-700"
-                        >
-                            {loading
-                                ? "Saving..."
-                                : "Save Adjustment"}
-                        </Button>
-                    </DialogFooter>
                 </form>
+
+                <DialogFooter className="border-t border-blue-100 bg-blue-50/60 pt-5">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() =>
+                            handleOpenChange(
+                                false
+                            )
+                        }
+                        disabled={
+                            loading
+                        }
+                        className="border-slate-200 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="submit"
+                        form="stock-adjustment-form"
+                        disabled={
+                            loading ||
+                            productsDataLoading ||
+                            selectableProducts.length === 0
+                        }
+                        className="bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                        {loading
+                            ? "Saving..."
+                            : "Save Adjustment"}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

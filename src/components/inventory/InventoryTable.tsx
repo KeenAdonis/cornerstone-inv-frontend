@@ -32,13 +32,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
+    DataTablePagination,
+} from "@/components/ui/data-table-pagination";
 
 import type {
     Inventory,
@@ -55,8 +50,6 @@ interface InventoryTableProps {
     onUpdated?: () => void;
 }
 
-const INVENTORY_PER_PAGE = 5;
-
 export default function InventoryTable({
     inventory,
     onUpdated,
@@ -64,11 +57,16 @@ export default function InventoryTable({
     const [currentPage, setCurrentPage] =
         useState(1);
 
+    const [pageSize, setPageSize] =
+        useState(10);
+
     const [search, setSearch] =
         useState("");
 
     const [status, setStatus] =
-        useState<InventoryStockStatus>("all");
+        useState<InventoryStockStatus>(
+            "all"
+        );
 
     const [
         selectedInventory,
@@ -84,7 +82,8 @@ export default function InventoryTable({
         quantity: string,
         reorderLevel: string
     ) => {
-        const value = Number(quantity);
+        const value =
+            Number(quantity);
 
         const threshold =
             Number(reorderLevel);
@@ -115,57 +114,71 @@ export default function InventoryTable({
         };
     };
 
-    const filteredInventory = useMemo(() => {
-        const normalizedSearch =
-            search.trim().toLowerCase();
+    const filteredInventory =
+        useMemo(() => {
+            const normalizedSearch =
+                search.trim().toLowerCase();
 
-        return inventory.filter((item) => {
-            const matchesSearch =
-                !normalizedSearch ||
-                item.product.name
-                    .toLowerCase()
-                    .includes(normalizedSearch) ||
-                item.product.sku
-                    .toLowerCase()
-                    .includes(normalizedSearch) ||
-                (
-                    item.product.category?.name ??
-                    ""
-                )
-                    .toLowerCase()
-                    .includes(normalizedSearch);
+            return inventory.filter(
+                (item) => {
+                    const matchesSearch =
+                        !normalizedSearch ||
+                        item.product.name
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            ) ||
+                        item.product.sku
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            ) ||
+                        (
+                            item.product
+                                .category
+                                ?.name ?? ""
+                        )
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            );
 
-            const stockStatus =
-                getStockStatus(
-                    item.quantity,
-                    item.reorder_level
-                );
+                    const stockStatus =
+                        getStockStatus(
+                            item.quantity,
+                            item.reorder_level
+                        );
 
-            const matchesStatus =
-                status === "all" ||
-                stockStatus.value === status;
+                    const matchesStatus =
+                        status === "all" ||
+                        stockStatus.value ===
+                            status;
 
-            return (
-                matchesSearch &&
-                matchesStatus
+                    return (
+                        matchesSearch &&
+                        matchesStatus
+                    );
+                }
             );
-        });
-    }, [
-        inventory,
-        search,
-        status,
-    ]);
+        }, [
+            inventory,
+            search,
+            status,
+        ]);
 
     const totalPages = Math.ceil(
         filteredInventory.length /
-            INVENTORY_PER_PAGE
+            pageSize
     );
 
     useEffect(() => {
         setCurrentPage((page) =>
             Math.min(
                 Math.max(page, 1),
-                Math.max(totalPages, 1)
+                Math.max(
+                    totalPages,
+                    1
+                )
             )
         );
     }, [totalPages]);
@@ -175,22 +188,24 @@ export default function InventoryTable({
     }, [
         search,
         status,
+        pageSize,
     ]);
 
-    const paginatedInventory = useMemo(() => {
-        const startIndex =
-            (currentPage - 1) *
-            INVENTORY_PER_PAGE;
+    const paginatedInventory =
+        useMemo(() => {
+            const startIndex =
+                (currentPage - 1) *
+                pageSize;
 
-        return filteredInventory.slice(
-            startIndex,
-            startIndex +
-                INVENTORY_PER_PAGE
-        );
-    }, [
-        filteredInventory,
-        currentPage,
-    ]);
+            return filteredInventory.slice(
+                startIndex,
+                startIndex + pageSize
+            );
+        }, [
+            filteredInventory,
+            currentPage,
+            pageSize,
+        ]);
 
     const formatQuantity = (
         quantity: string
@@ -224,21 +239,6 @@ export default function InventoryTable({
         onUpdated?.();
     };
 
-    const goToPreviousPage = () => {
-        setCurrentPage((page) =>
-            Math.max(page - 1, 1)
-        );
-    };
-
-    const goToNextPage = () => {
-        setCurrentPage((page) =>
-            Math.min(
-                page + 1,
-                totalPages
-            )
-        );
-    };
-
     return (
         <>
             <div className="mt-6 overflow-hidden rounded-sm border border-slate-200 bg-white">
@@ -246,9 +246,7 @@ export default function InventoryTable({
                     search={search}
                     status={status}
                     currentPage={currentPage}
-                    itemsPerPage={
-                        INVENTORY_PER_PAGE
-                    }
+                    itemsPerPage={pageSize}
                     totalItems={
                         filteredInventory.length
                     }
@@ -278,39 +276,39 @@ export default function InventoryTable({
                         <Table>
                             <TableHeader>
                                 <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
-                                    <TableHead className="text-blue-900">
+                                    <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                         Product
                                     </TableHead>
 
-                                    <TableHead className="text-blue-900">
+                                    <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                         SKU
                                     </TableHead>
 
-                                    <TableHead className="text-blue-900">
+                                    <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                         Category
                                     </TableHead>
 
-                                    <TableHead className="text-blue-900">
+                                    <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                         Location
                                     </TableHead>
 
-                                    <TableHead className="text-right text-blue-900">
+                                    <TableHead className="whitespace-nowrap text-right text-xs font-semibold text-blue-900">
                                         Quantity
                                     </TableHead>
 
-                                    <TableHead className="text-right text-blue-900">
+                                    <TableHead className="whitespace-nowrap text-right text-xs font-semibold text-blue-900">
                                         PAR Level
                                     </TableHead>
 
-                                    <TableHead className="text-right text-blue-900">
+                                    <TableHead className="whitespace-nowrap text-right text-xs font-semibold text-blue-900">
                                         Reorder Level
                                     </TableHead>
 
-                                    <TableHead className="text-blue-900">
+                                    <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                         Status
                                     </TableHead>
 
-                                    <TableHead className="w-12 text-right text-blue-900">
+                                    <TableHead className="w-12 whitespace-nowrap text-right text-xs font-semibold text-blue-900">
                                         Actions
                                     </TableHead>
                                 </TableRow>
@@ -496,101 +494,32 @@ export default function InventoryTable({
                             </TableBody>
                         </Table>
 
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="border-t border-blue-100 bg-white px-4 py-3">
-                                <Pagination>
-                                    <PaginationContent>
-                                        <PaginationItem>
-                                            <PaginationPrevious
-                                                href="#"
-                                                onClick={(
-                                                    event
-                                                ) => {
-                                                    event.preventDefault();
-                                                    goToPreviousPage();
-                                                }}
-                                                aria-disabled={
-                                                    currentPage ===
-                                                    1
-                                                }
-                                                className={
-                                                    currentPage ===
-                                                    1
-                                                        ? "pointer-events-none opacity-50"
-                                                        : ""
-                                                }
-                                            />
-                                        </PaginationItem>
-
-                                        {Array.from(
-                                            {
-                                                length: totalPages,
-                                            },
-                                            (
-                                                _,
-                                                index
-                                            ) =>
-                                                index +
-                                                1
-                                        ).map(
-                                            (
-                                                page
-                                            ) => (
-                                                <PaginationItem
-                                                    key={
-                                                        page
-                                                    }
-                                                >
-                                                    <PaginationLink
-                                                        href="#"
-                                                        isActive={
-                                                            page ===
-                                                            currentPage
-                                                        }
-                                                        onClick={(
-                                                            event
-                                                        ) => {
-                                                            event.preventDefault();
-
-                                                            setCurrentPage(
-                                                                page
-                                                            );
-                                                        }}
-                                                    >
-                                                        {
-                                                            page
-                                                        }
-                                                    </PaginationLink>
-                                                </PaginationItem>
-                                            )
-                                        )}
-
-                                        <PaginationItem>
-                                            <PaginationNext
-                                                href="#"
-                                                onClick={(
-                                                    event
-                                                ) => {
-                                                    event.preventDefault();
-                                                    goToNextPage();
-                                                }}
-                                                aria-disabled={
-                                                    currentPage ===
-                                                    totalPages
-                                                }
-                                                className={
-                                                    currentPage ===
-                                                    totalPages
-                                                        ? "pointer-events-none opacity-50"
-                                                        : ""
-                                                }
-                                            />
-                                        </PaginationItem>
-                                    </PaginationContent>
-                                </Pagination>
-                            </div>
-                        )}
+                        <DataTablePagination
+                            currentPage={
+                                currentPage
+                            }
+                            totalPages={
+                                totalPages
+                            }
+                            totalItems={
+                                filteredInventory.length
+                            }
+                            pageSize={
+                                pageSize
+                            }
+                            pageSizeOptions={[
+                                10,
+                                25,
+                                50,
+                                100,
+                            ]}
+                            onPageChange={
+                                setCurrentPage
+                            }
+                            onPageSizeChange={
+                                setPageSize
+                            }
+                        />
                     </>
                 )}
             </div>

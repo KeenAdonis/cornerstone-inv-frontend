@@ -602,3 +602,159 @@ export async function completePurchaseOrder(
         data as PurchaseOrderResponse
     ).data.purchase_order;
 }
+
+export interface BulkApprovePurchaseOrdersPayload {
+    purchase_order_ids: number[];
+}
+
+/**
+ * Approves multiple pending purchase orders.
+ */
+export async function bulkApprovePurchaseOrders(
+    payload: BulkApprovePurchaseOrdersPayload
+): Promise<PurchaseOrder[]> {
+    const csrfResponse = await fetch(
+        `${API_ORIGIN}/sanctum/csrf-cookie`,
+        {
+            method: "GET",
+            credentials: "include",
+        }
+    );
+
+    if (!csrfResponse.ok) {
+        throw new Error(
+            "Failed to initialize secure request."
+        );
+    }
+
+    const xsrfToken = getXsrfToken();
+
+    if (!xsrfToken) {
+        throw new Error(
+            "Unable to initialize CSRF protection."
+        );
+    }
+
+    const response = await fetch(
+        `${API_BASE_URL}/purchase-orders/bulk-approve`,
+        {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                Accept: "application/json",
+                "Content-Type":
+                    "application/json",
+                "X-XSRF-TOKEN":
+                    xsrfToken,
+            },
+            body: JSON.stringify(
+                payload
+            ),
+        }
+    );
+
+    const data:
+        | {
+              success: boolean;
+              message: string;
+              data: {
+                  purchase_orders: PurchaseOrder[];
+              };
+          }
+        | { message?: string } =
+        await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            "message" in data &&
+            data.message
+                ? data.message
+                : "Failed to approve purchase orders."
+        );
+    }
+
+    return (
+        data as {
+            success: boolean;
+            message: string;
+            data: {
+                purchase_orders: PurchaseOrder[];
+            };
+        }
+    ).data.purchase_orders;
+}
+
+export interface BulkRejectPurchaseOrdersPayload {
+    purchase_order_ids: number[];
+    rejection_reason: string;
+}
+
+export async function bulkRejectPurchaseOrders(
+    payload: BulkRejectPurchaseOrdersPayload
+): Promise<PurchaseOrder[]> {
+    const csrfResponse = await fetch(
+        `${API_ORIGIN}/sanctum/csrf-cookie`,
+        {
+            method: "GET",
+            credentials: "include",
+        }
+    );
+
+    if (!csrfResponse.ok) {
+        throw new Error(
+            "Failed to initialize secure request."
+        );
+    }
+
+    const xsrfToken = getXsrfToken();
+
+    if (!xsrfToken) {
+        throw new Error(
+            "Unable to initialize CSRF protection."
+        );
+    }
+
+    const response = await fetch(
+        `${API_BASE_URL}/purchase-orders/bulk-reject`,
+        {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "X-XSRF-TOKEN": xsrfToken,
+            },
+            body: JSON.stringify(payload),
+        }
+    );
+
+    const data:
+        | {
+              success: boolean;
+              message: string;
+              data: {
+                  purchase_orders: PurchaseOrder[];
+              };
+          }
+        | {
+              message?: string;
+          } = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            "message" in data && data.message
+                ? data.message
+                : "Failed to reject purchase orders."
+        );
+    }
+
+    return (
+        data as {
+            success: boolean;
+            message: string;
+            data: {
+                purchase_orders: PurchaseOrder[];
+            };
+        }
+    ).data.purchase_orders;
+}

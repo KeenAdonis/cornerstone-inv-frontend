@@ -26,6 +26,10 @@ import { Button } from "@/components/ui/button";
 
 import { Input } from "@/components/ui/input";
 
+import { format } from "date-fns";
+
+import { DatePicker } from "@/components/ui/date-picker";
+
 import type {
     PurchaseOrder,
 } from "@/src/services/purchaseOrderService";
@@ -247,29 +251,25 @@ export default function CompletePurchaseOrderDialog({
                             </span>
                         </label>
 
-                        <Input
-                            id="date-of-arrival"
-                            type="date"
+                        <DatePicker
                             value={
                                 dateOfArrival
+                                    ? new Date(
+                                          `${dateOfArrival}T00:00:00`
+                                      )
+                                    : undefined
                             }
-                            onChange={(
-                                event
-                            ) => {
+                            onChange={(date) => {
                                 setDateOfArrival(
-                                    event
-                                        .target
-                                        .value
+                                    date
+                                        ? format(date, "yyyy-MM-dd")
+                                        : ""
                                 );
-
-                                setValidationError(
-                                    null
-                                );
+                            
+                                setValidationError(null);
                             }}
-                            disabled={
-                                completing
-                            }
-                            className="border-slate-200 bg-white"
+                            placeholder="Select arrival date"
+                            disabled={completing}
                         />
 
                         <p className="text-xs text-slate-500">

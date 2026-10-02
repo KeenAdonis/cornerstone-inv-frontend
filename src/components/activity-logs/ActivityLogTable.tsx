@@ -19,18 +19,9 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import { Badge } from "@/components/ui/badge";
-
 import { Button } from "@/components/ui/button";
 
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 
 import type {
     ActivityLog,
@@ -45,60 +36,6 @@ interface ActivityLogTableProps {
         log: ActivityLog
     ) => void;
 }
-
-const ACTIVITY_LOGS_PER_PAGE = 5;
-
-const getPaginationPages = (
-    currentPage: number,
-    totalPages: number
-): (number | "...")[] => {
-    if (totalPages <= 7) {
-        return Array.from(
-            {
-                length: totalPages,
-            },
-            (_, index) =>
-                index + 1
-        );
-    }
-
-    if (currentPage <= 4) {
-        return [
-            1,
-            2,
-            3,
-            4,
-            5,
-            "...",
-            totalPages,
-        ];
-    }
-
-    if (
-        currentPage >=
-        totalPages - 3
-    ) {
-        return [
-            1,
-            "...",
-            totalPages - 4,
-            totalPages - 3,
-            totalPages - 2,
-            totalPages - 1,
-            totalPages,
-        ];
-    }
-
-    return [
-        1,
-        "...",
-        currentPage - 1,
-        currentPage,
-        currentPage + 1,
-        "...",
-        totalPages,
-    ];
-};
 
 function formatDateTime(
     value: string
@@ -194,9 +131,14 @@ export default function ActivityLogTable({
         setCurrentPage,
     ] = useState(1);
 
+    const [
+        pageSize,
+        setPageSize,
+    ] = useState(10);
+
     const totalPages = Math.ceil(
         logs.length /
-            ACTIVITY_LOGS_PER_PAGE
+            pageSize
     );
 
     useEffect(() => {
@@ -213,47 +155,24 @@ export default function ActivityLogTable({
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [logs]);
+    }, [logs, pageSize]);
 
     const startIndex =
         (currentPage - 1) *
-        ACTIVITY_LOGS_PER_PAGE;
+        pageSize;
 
     const paginatedLogs =
         useMemo(() => {
             return logs.slice(
                 startIndex,
                 startIndex +
-                    ACTIVITY_LOGS_PER_PAGE
+                    pageSize
             );
         }, [
             logs,
             startIndex,
+            pageSize,
         ]);
-
-    const paginationPages =
-        getPaginationPages(
-            currentPage,
-            totalPages
-        );
-
-    const goToPreviousPage = () => {
-        setCurrentPage((page) =>
-            Math.max(
-                page - 1,
-                1
-            )
-        );
-    };
-
-    const goToNextPage = () => {
-        setCurrentPage((page) =>
-            Math.min(
-                page + 1,
-                totalPages
-            )
-        );
-    };
 
     return (
         <div className="overflow-hidden rounded-sm border border-slate-200 bg-white">
@@ -278,27 +197,27 @@ export default function ActivityLogTable({
                     <Table>
                         <TableHeader>
                             <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Date & Time
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     User
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Action
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Module
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Location
                                 </TableHead>
 
-                                <TableHead className="w-16 text-right text-blue-900">
+                                <TableHead className="w-16 whitespace-nowrap text-right text-xs font-semibold text-blue-900">
                                     Details
                                 </TableHead>
                             </TableRow>
@@ -320,11 +239,13 @@ export default function ActivityLogTable({
                                         <TableCell>
                                             <div>
                                                 <p className="font-medium text-slate-800">
-                                                    {log.user?.name ?? "Unauthenticated"}
+                                                    {log.user?.name ??
+                                                        "Unauthenticated"}
                                                 </p>
-                                                                                
+
                                                 <p className="text-xs text-slate-500">
-                                                    {log.user?.email ?? "No authenticated user"}
+                                                    {log.user?.email ??
+                                                        "No authenticated user"}
                                                 </p>
                                             </div>
                                         </TableCell>
@@ -409,110 +330,33 @@ export default function ActivityLogTable({
                         </TableBody>
                     </Table>
 
-                    {totalPages > 1 && (
-                        <div className="border-t border-blue-100 bg-white px-4 py-3">
-                            <Pagination>
-                                <PaginationContent>
-                                    <PaginationItem>
-                                        <PaginationPrevious
-                                            href="#"
-                                            onClick={(
-                                                event
-                                            ) => {
-                                                event.preventDefault();
-
-                                                goToPreviousPage();
-                                            }}
-                                            aria-disabled={
-                                                currentPage ===
-                                                1
-                                            }
-                                            className={
-                                                currentPage ===
-                                                1
-                                                    ? "pointer-events-none opacity-50"
-                                                    : ""
-                                            }
-                                        />
-                                    </PaginationItem>
-
-                                    {paginationPages.map(
-                                        (
-                                            page,
-                                            index
-                                        ) => {
-                                            if (
-                                                page ===
-                                                "..."
-                                            ) {
-                                                return (
-                                                    <PaginationItem
-                                                        key={`ellipsis-${index}`}
-                                                    >
-                                                        <span className="flex h-9 w-9 items-center justify-center text-sm text-slate-400">
-                                                            ...
-                                                        </span>
-                                                    </PaginationItem>
-                                                );
-                                            }
-
-                                            return (
-                                                <PaginationItem
-                                                    key={
-                                                        page
-                                                    }
-                                                >
-                                                    <PaginationLink
-                                                        href="#"
-                                                        isActive={
-                                                            page ===
-                                                            currentPage
-                                                        }
-                                                        onClick={(
-                                                            event
-                                                        ) => {
-                                                            event.preventDefault();
-
-                                                            setCurrentPage(
-                                                                page
-                                                            );
-                                                        }}
-                                                    >
-                                                        {
-                                                            page
-                                                        }
-                                                    </PaginationLink>
-                                                </PaginationItem>
-                                            );
-                                        }
-                                    )}
-
-                                    <PaginationItem>
-                                        <PaginationNext
-                                            href="#"
-                                            onClick={(
-                                                event
-                                            ) => {
-                                                event.preventDefault();
-
-                                                goToNextPage();
-                                            }}
-                                            aria-disabled={
-                                                currentPage ===
-                                                totalPages
-                                            }
-                                            className={
-                                                currentPage ===
-                                                totalPages
-                                                    ? "pointer-events-none opacity-50"
-                                                    : ""
-                                            }
-                                        />
-                                    </PaginationItem>
-                                </PaginationContent>
-                            </Pagination>
-                        </div>
-                    )}
+                    {/* Pagination */}
+                    <DataTablePagination
+                        currentPage={
+                            currentPage
+                        }
+                        totalPages={
+                            totalPages
+                        }
+                        totalItems={
+                            logs.length
+                        }
+                        pageSize={
+                            pageSize
+                        }
+                        pageSizeOptions={[
+                            10,
+                            25,
+                            50,
+                            100,
+                        ]}
+                        onPageChange={
+                            setCurrentPage
+                        }
+                        onPageSizeChange={
+                            setPageSize
+                        }
+                    />
                 </>
             )}
         </div>

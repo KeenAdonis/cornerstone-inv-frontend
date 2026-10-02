@@ -29,17 +29,12 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
-
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+
+import {
+    DataTablePagination,
+} from "@/components/ui/data-table-pagination";
 
 import type {
     Product,
@@ -57,17 +52,17 @@ import DeleteProductDialog from "@/src/components/products/DeleteProductDialog";
 
 interface ProductTableProps {
     products: Product[];
+
     categories: {
         id: number;
         name: string;
     }[];
+
     onProductUpdated: () => void;
 }
 
 type ProductStatus =
     Product["status"];
-
-const PRODUCTS_PER_PAGE = 5;
 
 export default function ProductTable({
     products,
@@ -76,6 +71,9 @@ export default function ProductTable({
 }: ProductTableProps) {
     const [currentPage, setCurrentPage] =
         useState(1);
+
+    const [pageSize, setPageSize] =
+        useState(10);
 
     const [search, setSearch] =
         useState("");
@@ -101,54 +99,71 @@ export default function ProductTable({
         error: statusError,
     } = useToggleProductStatus();
 
-    const filteredProducts = useMemo(() => {
-        const normalizedSearch =
-            search.trim().toLowerCase();
+    const filteredProducts =
+        useMemo(() => {
+            const normalizedSearch =
+                search.trim().toLowerCase();
 
-        return products.filter((product) => {
-            const matchesSearch =
-                !normalizedSearch ||
-                product.name
-                    .toLowerCase()
-                    .includes(normalizedSearch) ||
-                product.sku
-                    .toLowerCase()
-                    .includes(normalizedSearch) ||
-                (product.description ?? "")
-                    .toLowerCase()
-                    .includes(normalizedSearch);
+            return products.filter(
+                (product) => {
+                    const matchesSearch =
+                        !normalizedSearch ||
+                        product.name
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            ) ||
+                        product.sku
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            ) ||
+                        (
+                            product.description ??
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(
+                                normalizedSearch
+                            );
 
-            const matchesCategory =
-                categoryId === "all" ||
-                product.category_id === categoryId;
+                    const matchesCategory =
+                        categoryId === "all" ||
+                        product.category_id ===
+                            categoryId;
 
-            const matchesStatus =
-                status === "all" ||
-                product.status === status;
+                    const matchesStatus =
+                        status === "all" ||
+                        product.status ===
+                            status;
 
-            return (
-                matchesSearch &&
-                matchesCategory &&
-                matchesStatus
+                    return (
+                        matchesSearch &&
+                        matchesCategory &&
+                        matchesStatus
+                    );
+                }
             );
-        });
-    }, [
-        products,
-        search,
-        categoryId,
-        status,
-    ]);
+        }, [
+            products,
+            search,
+            categoryId,
+            status,
+        ]);
 
     const totalPages = Math.ceil(
         filteredProducts.length /
-            PRODUCTS_PER_PAGE
+            pageSize
     );
 
     useEffect(() => {
         setCurrentPage((page) =>
             Math.min(
                 Math.max(page, 1),
-                Math.max(totalPages, 1)
+                Math.max(
+                    totalPages,
+                    1
+                )
             )
         );
     }, [totalPages]);
@@ -159,33 +174,18 @@ export default function ProductTable({
         search,
         categoryId,
         status,
+        pageSize,
     ]);
 
     const startIndex =
         (currentPage - 1) *
-        PRODUCTS_PER_PAGE;
+        pageSize;
 
     const paginatedProducts =
         filteredProducts.slice(
             startIndex,
-            startIndex +
-                PRODUCTS_PER_PAGE
+            startIndex + pageSize
         );
-
-    const goToPreviousPage = () => {
-        setCurrentPage((page) =>
-            Math.max(page - 1, 1)
-        );
-    };
-
-    const goToNextPage = () => {
-        setCurrentPage((page) =>
-            Math.min(
-                page + 1,
-                totalPages
-            )
-        );
-    };
 
     const handleStatusChange = async (
         productId: number
@@ -208,9 +208,7 @@ export default function ProductTable({
                 status={status}
                 categories={categories}
                 currentPage={currentPage}
-                itemsPerPage={
-                    PRODUCTS_PER_PAGE
-                }
+                itemsPerPage={pageSize}
                 totalItems={
                     filteredProducts.length
                 }
@@ -232,7 +230,8 @@ export default function ProductTable({
             )}
 
             {/* Table */}
-            {filteredProducts.length === 0 ? (
+            {filteredProducts.length ===
+            0 ? (
                 <div className="px-6 py-12 text-center">
                     <p className="text-sm font-medium text-slate-700">
                         No products found.
@@ -243,160 +242,197 @@ export default function ProductTable({
                     </p>
                 </div>
             ) : (
-                <Table>
-                    <TableHeader>
-                        <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
-                            <TableHead className="text-blue-900">
-                                Product Name
-                            </TableHead>
+                <>
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Product Name
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                SKU
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    SKU
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Category
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Category
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Unit
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Unit
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                SRP
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    SRP
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Status
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Status
+                                </TableHead>
 
-                            <TableHead className="w-16 text-right text-blue-900">
-                                Actions
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
+                                <TableHead className="w-16 whitespace-nowrap text-right text-xs font-semibold text-blue-900">
+                                    Actions
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
 
-                    <TableBody>
-                        {paginatedProducts.map(
-                            (product) => (
-                                <TableRow
-                                    key={product.id}
-                                    className="border-slate-200 hover:bg-slate-50"
-                                >
-                                    <TableCell className="font-medium text-slate-900">
-                                        {product.name}
-                                    </TableCell>
-
-                                    <TableCell className="font-mono text-sm text-slate-600">
-                                        {product.sku}
-                                    </TableCell>
-
-                                    <TableCell className="text-slate-600">
-                                        {product.category?.name ??
-                                            "Uncategorized"}
-                                    </TableCell>
-
-                                    <TableCell className="text-slate-600">
-                                        {product.unit}
-                                    </TableCell>
-
-                                    <TableCell className="font-medium text-slate-900">
-                                        ₱
-                                        {Number(
-                                            product.srp
-                                        ).toLocaleString(
-                                            "en-PH",
+                        <TableBody>
+                            {paginatedProducts.map(
+                                (product) => (
+                                    <TableRow
+                                        key={
+                                            product.id
+                                        }
+                                        className="border-slate-200 hover:bg-slate-50"
+                                    >
+                                        <TableCell className="font-medium text-slate-900">
                                             {
-                                                minimumFractionDigits: 2,
-                                                maximumFractionDigits: 2,
+                                                product.name
                                             }
-                                        )}
-                                    </TableCell>
+                                        </TableCell>
 
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Switch
-                                                checked={
-                                                    product.status ===
-                                                    "active"
-                                                }
-                                                onCheckedChange={() =>
-                                                    handleStatusChange(
-                                                        product.id
-                                                    )
-                                                }
-                                                disabled={
-                                                    statusLoading
-                                                }
-                                                aria-label={`Toggle ${product.name} status`}
-                                            />
+                                        <TableCell className="font-mono text-sm text-slate-600">
+                                            {
+                                                product.sku
+                                            }
+                                        </TableCell>
 
-                                            <span className="text-sm capitalize text-slate-600">
-                                                {product.status}
-                                            </span>
-                                        </div>
-                                    </TableCell>
+                                        <TableCell className="text-slate-600">
+                                            {
+                                                product
+                                                    .category
+                                                    ?.name ??
+                                                "Uncategorized"
+                                            }
+                                        </TableCell>
 
-                                    <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger
-                                                render={
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-slate-500 hover:bg-blue-50 hover:text-blue-600"
-                                                    />
+                                        <TableCell className="text-slate-600">
+                                            {
+                                                product.unit
+                                            }
+                                        </TableCell>
+
+                                        <TableCell className="font-medium text-slate-900">
+                                            ₱
+                                            {Number(
+                                                product.srp
+                                            ).toLocaleString(
+                                                "en-PH",
+                                                {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
                                                 }
-                                            >
-                                                <MoreHorizontal className="h-4 w-4" />
+                                            )}
+                                        </TableCell>
 
-                                                <span className="sr-only">
-                                                    Open actions
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Switch
+                                                    checked={
+                                                        product.status ===
+                                                        "active"
+                                                    }
+                                                    onCheckedChange={() =>
+                                                        handleStatusChange(
+                                                            product.id
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        statusLoading
+                                                    }
+                                                    aria-label={`Toggle ${product.name} status`}
+                                                />
+
+                                                <span className="text-sm capitalize text-slate-600">
+                                                    {
+                                                        product.status
+                                                    }
                                                 </span>
-                                            </DropdownMenuTrigger>
+                                            </div>
+                                        </TableCell>
 
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        setSelectedProduct(
-                                                            product
-                                                        )
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger
+                                                    render={
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="text-slate-500 hover:bg-blue-50 hover:text-blue-600"
+                                                        />
                                                     }
                                                 >
-                                                    <Eye className="mr-2 h-4 w-4" />
-                                                    View
-                                                </DropdownMenuItem>
+                                                    <MoreHorizontal className="h-4 w-4" />
 
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        setEditingProduct(
-                                                            product
-                                                        )
-                                                    }
-                                                >
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Edit
-                                                </DropdownMenuItem>
+                                                    <span className="sr-only">
+                                                        Open actions
+                                                    </span>
+                                                </DropdownMenuTrigger>
 
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        setDeletingProduct(
-                                                            product
-                                                        )
-                                                    }
-                                                    className="text-red-600 focus:text-red-600"
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    Delete
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            )
-                        )}
-                    </TableBody>
-                </Table>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setSelectedProduct(
+                                                                product
+                                                            )
+                                                        }
+                                                    >
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        View
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setEditingProduct(
+                                                                product
+                                                            )
+                                                        }
+                                                    >
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setDeletingProduct(
+                                                                product
+                                                            )
+                                                        }
+                                                        className="text-red-600 focus:text-red-600"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            )}
+                        </TableBody>
+                    </Table>
+
+                    <DataTablePagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalItems={
+                            filteredProducts.length
+                        }
+                        pageSize={pageSize}
+                        pageSizeOptions={[
+                            10,
+                            25,
+                            50,
+                            100,
+                        ]}
+                        onPageChange={
+                            setCurrentPage
+                        }
+                        onPageSizeChange={
+                            setPageSize
+                        }
+                    />
+                </>
             )}
 
             {/* View Product */}
@@ -407,7 +443,9 @@ export default function ProductTable({
                 }
                 onOpenChange={(open) => {
                     if (!open) {
-                        setSelectedProduct(null);
+                        setSelectedProduct(
+                            null
+                        );
                     }
                 }}
             />
@@ -424,7 +462,9 @@ export default function ProductTable({
                         setEditingProduct(null);
                     }
                 }}
-                onUpdated={onProductUpdated}
+                onUpdated={
+                    onProductUpdated
+                }
             />
 
             {/* Delete Product */}
@@ -435,86 +475,15 @@ export default function ProductTable({
                 }
                 onOpenChange={(open) => {
                     if (!open) {
-                        setDeletingProduct(null);
+                        setDeletingProduct(
+                            null
+                        );
                     }
                 }}
-                onDeleted={onProductUpdated}
+                onDeleted={
+                    onProductUpdated
+                }
             />
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="border-t border-blue-100 bg-white px-4 py-3">
-                    <Pagination>
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-                                        goToPreviousPage();
-                                    }}
-                                    aria-disabled={
-                                        currentPage === 1
-                                    }
-                                    className={
-                                        currentPage === 1
-                                            ? "pointer-events-none opacity-50"
-                                            : ""
-                                    }
-                                />
-                            </PaginationItem>
-
-                            {Array.from(
-                                {
-                                    length: totalPages,
-                                },
-                                (_, index) =>
-                                    index + 1
-                            ).map((page) => (
-                                <PaginationItem
-                                    key={page}
-                                >
-                                    <PaginationLink
-                                        href="#"
-                                        isActive={
-                                            page ===
-                                            currentPage
-                                        }
-                                        onClick={(event) => {
-                                            event.preventDefault();
-                                            setCurrentPage(
-                                                page
-                                            );
-                                        }}
-                                    >
-                                        {page}
-                                    </PaginationLink>
-                                </PaginationItem>
-                            ))}
-
-                            <PaginationItem>
-                                <PaginationNext
-                                    href="#"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-                                        goToNextPage();
-                                    }}
-                                    aria-disabled={
-                                        currentPage ===
-                                        totalPages
-                                    }
-                                    className={
-                                        currentPage ===
-                                        totalPages
-                                            ? "pointer-events-none opacity-50"
-                                            : ""
-                                    }
-                                />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                </div>
-            )}
         </div>
     );
 }

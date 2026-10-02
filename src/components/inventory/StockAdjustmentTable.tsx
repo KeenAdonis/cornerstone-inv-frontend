@@ -29,16 +29,9 @@ import {
 
 import { Button } from "@/components/ui/button";
 
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
-
 import { Input } from "@/components/ui/input";
+
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
 
 import type {
     StockAdjustment,
@@ -50,65 +43,14 @@ interface StockAdjustmentTableProps {
     stockAdjustments: StockAdjustment[];
 }
 
-const STOCK_ADJUSTMENTS_PER_PAGE = 5;
-
-const getPaginationPages = (
-    currentPage: number,
-    totalPages: number
-): (number | "...")[] => {
-    if (totalPages <= 7) {
-        return Array.from(
-            {
-                length: totalPages,
-            },
-            (_, index) =>
-                index + 1
-        );
-    }
-
-    if (currentPage <= 4) {
-        return [
-            1,
-            2,
-            3,
-            4,
-            5,
-            "...",
-            totalPages,
-        ];
-    }
-
-    if (
-        currentPage >=
-        totalPages - 3
-    ) {
-        return [
-            1,
-            "...",
-            totalPages - 4,
-            totalPages - 3,
-            totalPages - 2,
-            totalPages - 1,
-            totalPages,
-        ];
-    }
-
-    return [
-        1,
-        "...",
-        currentPage - 1,
-        currentPage,
-        currentPage + 1,
-        "...",
-        totalPages,
-    ];
-};
-
 export default function StockAdjustmentTable({
     stockAdjustments,
 }: StockAdjustmentTableProps) {
     const [currentPage, setCurrentPage] =
         useState(1);
+
+    const [pageSize, setPageSize] =
+        useState(10);
 
     const [search, setSearch] =
         useState("");
@@ -185,7 +127,7 @@ export default function StockAdjustmentTable({
 
     const totalPages = Math.ceil(
         filteredStockAdjustments.length /
-            STOCK_ADJUSTMENTS_PER_PAGE
+            pageSize
     );
 
     useEffect(() => {
@@ -202,42 +144,17 @@ export default function StockAdjustmentTable({
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [search]);
+    }, [search, pageSize]);
 
     const startIndex =
         (currentPage - 1) *
-        STOCK_ADJUSTMENTS_PER_PAGE;
+        pageSize;
 
     const paginatedStockAdjustments =
         filteredStockAdjustments.slice(
             startIndex,
-            startIndex +
-                STOCK_ADJUSTMENTS_PER_PAGE
+            startIndex + pageSize
         );
-
-    const paginationPages =
-        getPaginationPages(
-            currentPage,
-            totalPages
-        );
-
-    const goToPreviousPage = () => {
-        setCurrentPage((page) =>
-            Math.max(
-                page - 1,
-                1
-            )
-        );
-    };
-
-    const goToNextPage = () => {
-        setCurrentPage((page) =>
-            Math.min(
-                page + 1,
-                totalPages
-            )
-        );
-    };
 
     const formatDateTime = (
         value: string
@@ -248,18 +165,6 @@ export default function StockAdjustmentTable({
             dateStyle: "medium",
             timeStyle: "short",
         });
-    };
-
-    const formatQuantity = (
-        value: string
-    ) => {
-        return Number(value).toLocaleString(
-            "en-PH",
-            {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-            }
-        );
     };
 
     return (
@@ -291,32 +196,6 @@ export default function StockAdjustmentTable({
                 </div>
             </div>
 
-            {/* Result Count */}
-            <div className="border-b border-blue-50 px-4 py-2.5">
-                <p className="text-xs text-slate-500">
-                    Showing{" "}
-                    <span className="font-medium text-slate-700">
-                        {filteredStockAdjustments.length ===
-                        0
-                            ? 0
-                            : startIndex + 1}
-                        –
-                        {Math.min(
-                            startIndex +
-                                paginatedStockAdjustments.length,
-                            filteredStockAdjustments.length
-                        )}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-medium text-slate-700">
-                        {
-                            filteredStockAdjustments.length
-                        }
-                    </span>{" "}
-                    adjustments
-                </p>
-            </div>
-
             {/* Empty State */}
             {filteredStockAdjustments.length ===
             0 ? (
@@ -334,35 +213,35 @@ export default function StockAdjustmentTable({
                     <Table>
                         <TableHeader>
                             <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Reference
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Adjusted At
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Type
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Reason
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Location
                                 </TableHead>
 
-                                <TableHead className="text-center text-blue-900">
+                                <TableHead className="whitespace-nowrap text-center text-xs font-semibold text-blue-900">
                                     Items
                                 </TableHead>
 
-                                <TableHead className="text-blue-900">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     Created By
                                 </TableHead>
 
-                                <TableHead className="w-16 text-right text-blue-900">
+                                <TableHead className="w-16 whitespace-nowrap text-right text-xs font-semibold text-blue-900">
                                     Actions
                                 </TableHead>
                             </TableRow>
@@ -387,7 +266,7 @@ export default function StockAdjustmentTable({
                                             </span>
                                         </TableCell>
 
-                                        <TableCell className="text-sm text-slate-600">
+                                        <TableCell className="whitespace-nowrap text-sm text-slate-600">
                                             {formatDateTime(
                                                 stockAdjustment.adjusted_at
                                             )}
@@ -424,7 +303,7 @@ export default function StockAdjustmentTable({
                                                                 .name
                                                         }
                                                     </p>
-                                                    
+
                                                     <p className="text-xs text-slate-500">
                                                         Warehouse ·{" "}
                                                         {
@@ -443,7 +322,7 @@ export default function StockAdjustmentTable({
                                                                 .name
                                                         }
                                                     </p>
-                                                    
+
                                                     <p className="text-xs text-slate-500">
                                                         Branch ·{" "}
                                                         {
@@ -535,116 +414,33 @@ export default function StockAdjustmentTable({
                         </TableBody>
                     </Table>
 
-                    {/*
-                    |----------------------------------------------------------------------
-                    | Pagination
-                    |----------------------------------------------------------------------
-                    */}
-
-                    {totalPages > 1 && (
-                        <div className="border-t border-blue-100 bg-white px-4 py-3">
-                            <Pagination>
-                                <PaginationContent>
-                                    <PaginationItem>
-                                        <PaginationPrevious
-                                            href="#"
-                                            onClick={(
-                                                event
-                                            ) => {
-                                                event.preventDefault();
-
-                                                goToPreviousPage();
-                                            }}
-                                            aria-disabled={
-                                                currentPage ===
-                                                1
-                                            }
-                                            className={
-                                                currentPage ===
-                                                1
-                                                    ? "pointer-events-none opacity-50"
-                                                    : ""
-                                            }
-                                        />
-                                    </PaginationItem>
-
-                                    {paginationPages.map(
-                                        (
-                                            page,
-                                            index
-                                        ) => {
-                                            if (
-                                                page ===
-                                                "..."
-                                            ) {
-                                                return (
-                                                    <PaginationItem
-                                                        key={`ellipsis-${index}`}
-                                                    >
-                                                        <span className="flex h-9 w-9 items-center justify-center text-sm text-slate-400">
-                                                            ...
-                                                        </span>
-                                                    </PaginationItem>
-                                                );
-                                            }
-
-                                            return (
-                                                <PaginationItem
-                                                    key={
-                                                        page
-                                                    }
-                                                >
-                                                    <PaginationLink
-                                                        href="#"
-                                                        isActive={
-                                                            page ===
-                                                            currentPage
-                                                        }
-                                                        onClick={(
-                                                            event
-                                                        ) => {
-                                                            event.preventDefault();
-
-                                                            setCurrentPage(
-                                                                page
-                                                            );
-                                                        }}
-                                                    >
-                                                        {
-                                                            page
-                                                        }
-                                                    </PaginationLink>
-                                                </PaginationItem>
-                                            );
-                                        }
-                                    )}
-
-                                    <PaginationItem>
-                                        <PaginationNext
-                                            href="#"
-                                            onClick={(
-                                                event
-                                            ) => {
-                                                event.preventDefault();
-
-                                                goToNextPage();
-                                            }}
-                                            aria-disabled={
-                                                currentPage ===
-                                                totalPages
-                                            }
-                                            className={
-                                                currentPage ===
-                                                totalPages
-                                                    ? "pointer-events-none opacity-50"
-                                                    : ""
-                                            }
-                                        />
-                                    </PaginationItem>
-                                </PaginationContent>
-                            </Pagination>
-                        </div>
-                    )}
+                    {/* Pagination */}
+                    <DataTablePagination
+                        currentPage={
+                            currentPage
+                        }
+                        totalPages={
+                            totalPages
+                        }
+                        totalItems={
+                            filteredStockAdjustments.length
+                        }
+                        pageSize={
+                            pageSize
+                        }
+                        pageSizeOptions={[
+                            10,
+                            25,
+                            50,
+                            100,
+                        ]}
+                        onPageChange={
+                            setCurrentPage
+                        }
+                        onPageSizeChange={
+                            setPageSize
+                        }
+                    />
                 </>
             )}
 

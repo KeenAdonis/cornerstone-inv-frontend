@@ -29,15 +29,6 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination";
-
 import type {
     User,
     UserRole,
@@ -50,6 +41,8 @@ import { useToggleUserStatus } from "@/src/hooks/user/useToggleUserStatus";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+
 import ViewUserDialog from "@/src/components/admin/users/ViewUserDialog";
 import EditUserDialog from "@/src/components/admin/users/EditUserDialog";
 import UserTableToolbar from "@/src/components/admin/users/UserTableToolbar";
@@ -60,24 +53,37 @@ interface UserTableProps {
     onUserUpdated: () => void;
 }
 
-const USERS_PER_PAGE = 5;
-
 export default function UserTable({
     users,
     onUserUpdated,
 }: UserTableProps) {
-    const [currentPage, setCurrentPage] = useState(1);
+    const [
+        currentPage,
+        setCurrentPage,
+    ] = useState(1);
 
-    const [selectedUser, setSelectedUser] =
-        useState<User | null>(null);
+    const [
+        pageSize,
+        setPageSize,
+    ] = useState(10);
 
-    const [editingUser, setEditingUser] =
-        useState<User | null>(null);
+    const [
+        selectedUser,
+        setSelectedUser,
+    ] = useState<User | null>(null);
 
-    const [deletingUser, setDeletingUser] =
-        useState<User | null>(null);
+    const [
+        editingUser,
+        setEditingUser,
+    ] = useState<User | null>(null);
 
-    const [search, setSearch] = useState("");
+    const [
+        deletingUser,
+        setDeletingUser,
+    ] = useState<User | null>(null);
+
+    const [search, setSearch] =
+        useState("");
 
     const [role, setRole] =
         useState<UserRole | "all">("all");
@@ -95,10 +101,15 @@ export default function UserTable({
         error: statusError,
     } = useToggleUserStatus();
 
-    const roleLabels: Record<User["role"], string> = {
+    const roleLabels: Record<
+        User["role"],
+        string
+    > = {
         admin: "Administrator",
-        branch_coordinator: "Branch Coordinator",
-        warehouse_coordinator: "Warehouse Coordinator",
+        branch_coordinator:
+            "Branch Coordinator",
+        warehouse_coordinator:
+            "Warehouse Coordinator",
     };
 
     const getUserAssignmentNames = (
@@ -112,7 +123,8 @@ export default function UserTable({
                 user.assigned_branches?.length
             ) {
                 return user.assigned_branches.map(
-                    (branch) => branch.name
+                    (branch) =>
+                        branch.name
                 );
             }
 
@@ -153,7 +165,9 @@ export default function UserTable({
         }
 
         if (assignments.length <= 2) {
-            return assignments.join(" · ");
+            return assignments.join(
+                " · "
+            );
         }
 
         return `${assignments
@@ -169,7 +183,9 @@ export default function UserTable({
 
         return users.filter((user) => {
             const assignments =
-                getUserAssignmentNames(user);
+                getUserAssignmentNames(
+                    user
+                );
 
             const assignmentSearchText =
                 assignments
@@ -206,55 +222,56 @@ export default function UserTable({
                 matchesStatus
             );
         });
-    }, [users, search, role, status]);
+    }, [
+        users,
+        search,
+        role,
+        status,
+    ]);
 
     const totalPages = Math.ceil(
-        filteredUsers.length / USERS_PER_PAGE
+        filteredUsers.length /
+            pageSize
     );
 
     useEffect(() => {
         setCurrentPage((page) =>
             Math.min(
                 Math.max(page, 1),
-                Math.max(totalPages, 1)
+                Math.max(
+                    totalPages,
+                    1
+                )
             )
         );
     }, [totalPages]);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [search, role, status]);
+    }, [
+        search,
+        role,
+        status,
+        pageSize,
+    ]);
 
     const startIndex =
-        (currentPage - 1) * USERS_PER_PAGE;
+        (currentPage - 1) *
+        pageSize;
 
     const paginatedUsers =
         filteredUsers.slice(
             startIndex,
-            startIndex + USERS_PER_PAGE
+            startIndex + pageSize
         );
-
-    const goToPage = (page: number) => {
-        setCurrentPage(page);
-    };
-
-    const goToPreviousPage = () => {
-        setCurrentPage((page) =>
-            Math.max(page - 1, 1)
-        );
-    };
-
-    const goToNextPage = () => {
-        setCurrentPage((page) =>
-            Math.min(page + 1, totalPages)
-        );
-    };
 
     const handleStatusChange = async (
         userId: number
     ) => {
         const response =
-            await handleToggleUserStatus(userId);
+            await handleToggleUserStatus(
+                userId
+            );
 
         if (response) {
             onUserUpdated();
@@ -263,14 +280,15 @@ export default function UserTable({
 
     return (
         <div className="mt-6 overflow-hidden rounded-sm border border-slate-200 bg-white">
-
             <UserTableToolbar
                 search={search}
                 role={role}
                 status={status}
                 currentPage={currentPage}
-                itemsPerPage={USERS_PER_PAGE}
-                totalItems={filteredUsers.length}
+                itemsPerPage={pageSize}
+                totalItems={
+                    filteredUsers.length
+                }
                 onSearchChange={setSearch}
                 onRoleChange={setRole}
                 onStatusChange={setStatus}
@@ -298,157 +316,213 @@ export default function UserTable({
                     </p>
                 </div>
             ) : (
-                <Table>
-                    <TableHeader>
-                        <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
-                            <TableHead className="text-blue-900">
-                                Name
-                            </TableHead>
+                <>
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Name
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Email
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Email
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Role
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Role
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Assignment
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Assignment
+                                </TableHead>
 
-                            <TableHead className="text-blue-900">
-                                Status
-                            </TableHead>
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Status
+                                </TableHead>
 
-                            <TableHead className="w-16 text-right text-blue-900">
-                                Actions
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
+                                <TableHead className="w-16 whitespace-nowrap text-right text-xs font-semibold text-blue-900">
+                                    Actions
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
 
-                    <TableBody>
-                        {paginatedUsers.map((user) => (
-                            <TableRow
-                                key={user.id}
-                                className="border-slate-200 hover:bg-slate-50"
-                            >
-                                <TableCell className="font-medium text-slate-900">
-                                    {user.name}
-                                </TableCell>
-
-                                <TableCell className="text-slate-600">
-                                    {user.email}
-                                </TableCell>
-
-                                <TableCell className="text-slate-600">
-                                    {roleLabels[user.role]}
-                                </TableCell>
-
-                                <TableCell
-                                    className="max-w-xs text-slate-600"
-                                    title={getUserAssignmentNames(
-                                        user
-                                    ).join(" · ")}
-                                >
-                                    <span className="block truncate">
-                                        {getAssignmentLabel(user)}
-                                    </span>
-                                </TableCell>
-
-                                <TableCell>
-                                    <div className="flex items-center gap-3">
-                                        <Switch
-                                            checked={
-                                                user.status ===
-                                                "active"
+                        <TableBody>
+                            {paginatedUsers.map(
+                                (user) => (
+                                    <TableRow
+                                        key={
+                                            user.id
+                                        }
+                                        className="border-slate-200 hover:bg-slate-50"
+                                    >
+                                        <TableCell className="font-medium text-slate-900">
+                                            {
+                                                user.name
                                             }
-                                            onCheckedChange={() =>
-                                                handleStatusChange(
-                                                    user.id
-                                                )
-                                            }
-                                            disabled={
-                                                statusLoading
-                                            }
-                                            aria-label={`Toggle ${user.name} status`}
-                                        />
+                                        </TableCell>
 
-                                        <span className="text-sm capitalize text-slate-600">
-                                            {user.status}
-                                        </span>
-                                    </div>
-                                </TableCell>
-
-                                <TableCell className="text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger
-                                            render={
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-slate-500 hover:bg-blue-50 hover:text-blue-600"
-                                                />
+                                        <TableCell className="text-slate-600">
+                                            {
+                                                user.email
                                             }
+                                        </TableCell>
+
+                                        <TableCell className="text-slate-600">
+                                            {
+                                                roleLabels[
+                                                    user.role
+                                                ]
+                                            }
+                                        </TableCell>
+
+                                        <TableCell
+                                            className="max-w-xs text-slate-600"
+                                            title={getUserAssignmentNames(
+                                                user
+                                            ).join(
+                                                " · "
+                                            )}
                                         >
-                                            <MoreHorizontal className="h-4 w-4" />
-
-                                            <span className="sr-only">
-                                                Open actions
+                                            <span className="block truncate">
+                                                {getAssignmentLabel(
+                                                    user
+                                                )}
                                             </span>
-                                        </DropdownMenuTrigger>
+                                        </TableCell>
 
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem
-                                                onClick={() =>
-                                                    setSelectedUser(
-                                                        user
-                                                    )
-                                                }
-                                            >
-                                                <Eye className="mr-2 h-4 w-4" />
-                                                View
-                                            </DropdownMenuItem>
-
-                                            <DropdownMenuItem
-                                                onClick={() =>
-                                                    setEditingUser(
-                                                        user
-                                                    )
-                                                }
-                                            >
-                                                <Pencil className="mr-2 h-4 w-4" />
-                                                Edit
-                                            </DropdownMenuItem>
-
-                                            {authenticatedUser?.id !== user.id && (
-                                                <DropdownMenuItem
-                                                    onClick={() =>
-                                                        setDeletingUser(
-                                                            user
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Switch
+                                                    checked={
+                                                        user.status ===
+                                                        "active"
+                                                    }
+                                                    onCheckedChange={() =>
+                                                        handleStatusChange(
+                                                            user.id
                                                         )
                                                     }
-                                                    className="text-red-600 focus:text-red-600"
+                                                    disabled={
+                                                        statusLoading
+                                                    }
+                                                    aria-label={`Toggle ${user.name} status`}
+                                                />
+
+                                                <span className="text-sm capitalize text-slate-600">
+                                                    {
+                                                        user.status
+                                                    }
+                                                </span>
+                                            </div>
+                                        </TableCell>
+
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger
+                                                    render={
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="text-slate-500 hover:bg-blue-50 hover:text-blue-600"
+                                                        />
+                                                    }
                                                 >
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    Delete
-                                                </DropdownMenuItem>
-                                            )}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                                                    <MoreHorizontal className="h-4 w-4" />
+
+                                                    <span className="sr-only">
+                                                        Open actions
+                                                    </span>
+                                                </DropdownMenuTrigger>
+
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setSelectedUser(
+                                                                user
+                                                            )
+                                                        }
+                                                    >
+                                                        <Eye className="mr-2 h-4 w-4" />
+                                                        View
+                                                    </DropdownMenuItem>
+
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            setEditingUser(
+                                                                user
+                                                            )
+                                                        }
+                                                    >
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        Edit
+                                                    </DropdownMenuItem>
+
+                                                    {authenticatedUser?.id !==
+                                                        user.id && (
+                                                        <DropdownMenuItem
+                                                            onClick={() =>
+                                                                setDeletingUser(
+                                                                    user
+                                                                )
+                                                            }
+                                                            className="text-red-600 focus:text-red-600"
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Delete
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            )}
+                        </TableBody>
+                    </Table>
+
+                    {/* Pagination */}
+                    <DataTablePagination
+                        currentPage={
+                            currentPage
+                        }
+                        totalPages={
+                            totalPages
+                        }
+                        totalItems={
+                            filteredUsers.length
+                        }
+                        pageSize={
+                            pageSize
+                        }
+                        pageSizeOptions={[
+                            10,
+                            25,
+                            50,
+                            100,
+                        ]}
+                        onPageChange={
+                            setCurrentPage
+                        }
+                        onPageSizeChange={
+                            setPageSize
+                        }
+                    />
+                </>
             )}
+
             {/* View User Dialog */}
             <ViewUserDialog
                 user={selectedUser}
-                open={selectedUser !== null}
-                onOpenChange={(open) => {
+                open={
+                    selectedUser !== null
+                }
+                onOpenChange={(
+                    open
+                ) => {
                     if (!open) {
-                        setSelectedUser(null);
+                        setSelectedUser(
+                            null
+                        );
                     }
                 }}
             />
@@ -456,8 +530,12 @@ export default function UserTable({
             {/* Edit User Dialog */}
             <EditUserDialog
                 user={editingUser}
-                open={editingUser !== null}
-                onOpenChange={(open) => {
+                open={
+                    editingUser !== null
+                }
+                onOpenChange={(
+                    open
+                ) => {
                     if (!open) {
                         setEditingUser(null);
                     }
@@ -470,91 +548,22 @@ export default function UserTable({
             {/* Delete User Dialog */}
             <UserDeleteDialog
                 user={deletingUser}
-                open={deletingUser !== null}
-                onOpenChange={(open) => {
+                open={
+                    deletingUser !== null
+                }
+                onOpenChange={(
+                    open
+                ) => {
                     if (!open) {
-                        setDeletingUser(null);
+                        setDeletingUser(
+                            null
+                        );
                     }
                 }}
-                onDeleted={onUserUpdated}
+                onDeleted={
+                    onUserUpdated
+                }
             />
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="border-t border-blue-100 bg-white px-4 py-3">
-                    <Pagination>
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-                                        goToPreviousPage();
-                                    }}
-                                    aria-disabled={
-                                        currentPage === 1
-                                    }
-                                    className={
-                                        currentPage === 1
-                                            ? "pointer-events-none opacity-50"
-                                            : ""
-                                    }
-                                />
-                            </PaginationItem>
-
-                            {Array.from(
-                                { length: totalPages },
-                                (_, index) =>
-                                    index + 1
-                            ).map((page) => (
-                                <PaginationItem
-                                    key={page}
-                                >
-                                    <PaginationLink
-                                        href="#"
-                                        isActive={
-                                            page ===
-                                            currentPage
-                                        }
-                                        onClick={(
-                                            event
-                                        ) => {
-                                            event.preventDefault();
-                                            goToPage(
-                                                page
-                                            );
-                                        }}
-                                    >
-                                        {page}
-                                    </PaginationLink>
-                                </PaginationItem>
-                            ))}
-
-                            <PaginationItem>
-                                <PaginationNext
-                                    href="#"
-                                    onClick={(
-                                        event
-                                    ) => {
-                                        event.preventDefault();
-                                        goToNextPage();
-                                    }}
-                                    aria-disabled={
-                                        currentPage ===
-                                        totalPages
-                                    }
-                                    className={
-                                        currentPage ===
-                                        totalPages
-                                            ? "pointer-events-none opacity-50"
-                                            : ""
-                                    }
-                                />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                </div>
-            )}
         </div>
     );
 }

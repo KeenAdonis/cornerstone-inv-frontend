@@ -120,7 +120,7 @@ export default function AppSidebar({
 
             <aside
                 className={[
-                    "fixed inset-y-0 left-0 z-50 flex min-h-screen shrink-0 flex-col border-r border-slate-200 bg-white transition-all duration-300 lg:static lg:z-auto",
+                    "fixed inset-y-0 left-0 z-50 flex h-dvh min-h-0 shrink-0 flex-col border-r border-slate-200 bg-white transition-all duration-300 lg:static lg:h-auto lg:min-h-screen lg:z-auto",
                     mobileOpen
                         ? "translate-x-0"
                         : "-translate-x-full lg:translate-x-0",
@@ -176,7 +176,7 @@ export default function AppSidebar({
                 {/* NAVIGATION */}
                 {/* ================================================== */}
 
-                <nav className="flex-1 space-y-1 overflow-y-auto p-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {loading ? (
                         <div className="px-3 py-3 text-sm text-slate-400">
                             Loading...
@@ -247,7 +247,7 @@ export default function AppSidebar({
                 {/* ================================================== */}
 
                 {user && (
-                    <div className="shrink-0 border-t border-slate-200 bg-slate-50/60 p-3">
+                    <div className="shrink-0 border-t border-slate-200 bg-slate-50/60 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
                         {logoutError && (
                             <div
                                 className={[

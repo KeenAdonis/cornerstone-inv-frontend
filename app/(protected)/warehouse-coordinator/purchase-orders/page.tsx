@@ -14,6 +14,8 @@ import type {
 } from "@/src/services/purchaseOrderService";
 import { useCompletePurchaseOrder } from "@/src/hooks/purchase-orders/useCompletePurchaseOrder";
 
+import { toast } from "@/components/ui/toast";
+
 import PurchaseOrderTable from "@/src/components/purchase-orders/PurchaseOrderTable";
 import ViewPurchaseOrderDialog from "@/src/components/purchase-orders/ViewPurchaseOrderDialog";
 import ReleasePurchaseOrderDialog from "@/src/components/purchase-orders/ReleasePurchaseOrderDialog";
@@ -85,6 +87,13 @@ export default function PurchaseOrdersPage() {
                 return;
             }
 
+            toast.add({
+                title: "Purchase Order Prepared",
+                description:
+                    "Purchase order has been moved to preparing successfully.",
+                type: "success",
+            });
+
             setSelectedPurchaseOrder(
                 null
             );
@@ -127,6 +136,13 @@ export default function PurchaseOrdersPage() {
                 return;
             }
 
+            toast.add({
+                title: "Purchase Order Released",
+                description:
+                    "Purchase order has been released for delivery successfully.",
+                type: "success",
+            });
+
             setReleasePurchaseOrder(
                 null
             );
@@ -145,22 +161,29 @@ export default function PurchaseOrdersPage() {
             ) {
                 return;
             }
-
+        
             const updatedPurchaseOrder =
                 await complete(
                     selectedPurchaseOrder.id
                 );
-
+            
             if (
                 !updatedPurchaseOrder
             ) {
                 return;
             }
-
+        
+            toast.add({
+                title: "Purchase Order Completed",
+                description:
+                    "Purchase order has been completed successfully.",
+                type: "success",
+            });
+        
             setSelectedPurchaseOrder(
                 null
             );
-
+        
             await refetch();
         };
 

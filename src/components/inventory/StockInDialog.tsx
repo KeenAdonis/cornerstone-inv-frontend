@@ -11,6 +11,8 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
+import { toast } from "@/components/ui/toast";
+
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 import {
@@ -224,15 +226,22 @@ export default function StockInDialog({
 
         const response =
             await create(stockInData);
-
+            
         if (!response) {
             return;
         }
-
+        
+        toast.add({
+            title: "Stock Received",
+            description:
+                "Stock has been received successfully.",
+            type: "success",
+        });
+        
         onCreated?.();
-
+        
         setFormData(initialFormData);
-
+        
         onOpenChange(false);
     };
 

@@ -16,6 +16,7 @@ import {
 
 import { useAuth } from "@/src/hooks/useAuth";
 import { useLogout } from "@/src/hooks/useLogout";
+import { usePendingPurchaseOrderCount } from "@/src/hooks/purchase-orders/usePendingPurchaseOrderCount";
 
 interface AppSidebarProps {
     collapsed: boolean;
@@ -36,6 +37,10 @@ export default function AppSidebar({
         user,
         loading,
     } = useAuth();
+
+    const {
+        count: pendingPurchaseOrderCount,
+    } = usePendingPurchaseOrderCount(user?.role === "admin");
 
     const {
         handleLogout,
@@ -194,6 +199,17 @@ export default function AppSidebar({
                                         `${item.href}/`
                                     );
 
+                                const isPurchaseOrder =
+                                    item.label ===
+                                    "Purchase Orders";
+
+                                const showPurchaseOrderNotification =
+                                    isPurchaseOrder &&
+                                    user?.role ===
+                                        "admin" &&
+                                    pendingPurchaseOrderCount >
+                                        0;
+
                                 return (
                                     <Link
                                         key={
@@ -211,7 +227,7 @@ export default function AppSidebar({
                                             onMobileClose
                                         }
                                         className={[
-                                            "flex items-center rounded-lg px-3 py-3 text-sm font-medium transition",
+                                            "relative flex items-center rounded-lg px-3 py-3 text-sm font-medium transition",
                                             collapsed
                                                 ? "lg:justify-center"
                                                 : "gap-3",
@@ -224,17 +240,50 @@ export default function AppSidebar({
                                     >
                                         <Icon className="h-5 w-5 shrink-0" />
 
+                                        {/* ========================================== */}
+                                        {/* EXPANDED NAVIGATION LABEL */}
+                                        {/* ========================================== */}
+
                                         <span
-                                            className={
+                                            className={[
+                                                "min-w-0 truncate",
                                                 collapsed
                                                     ? "lg:hidden"
-                                                    : ""
-                                            }
+                                                    : "flex-1",
+                                            ].join(
+                                                " "
+                                            )}
                                         >
                                             {
                                                 item.label
                                             }
                                         </span>
+
+                                        {/* ========================================== */}
+                                        {/* PURCHASE ORDER COUNT - EXPANDED */}
+                                        {/* ========================================== */}
+
+                                        {showPurchaseOrderNotification &&
+                                            !collapsed && (
+                                                <span className="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-semibold leading-none text-white shadow-sm">
+                                                    {pendingPurchaseOrderCount >
+                                                    99
+                                                        ? "99+"
+                                                        : pendingPurchaseOrderCount}
+                                                </span>
+                                            )}
+
+                                        {/* ========================================== */}
+                                        {/* PURCHASE ORDER DOT - COLLAPSED */}
+                                        {/* ========================================== */}
+
+                                        {showPurchaseOrderNotification &&
+                                            collapsed && (
+                                                <span
+                                                    className="absolute right-1.5 top-1.5 hidden h-2.5 w-2.5 rounded-full bg-red-500 lg:block"
+                                                    aria-label={`${pendingPurchaseOrderCount} pending purchase orders`}
+                                                />
+                                            )}
                                     </Link>
                                 );
                             }

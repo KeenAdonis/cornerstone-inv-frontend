@@ -19,6 +19,8 @@ import {
 
 import { Input } from "@/components/ui/input";
 
+import { toast } from "@/components/ui/toast";
+
 import { useUpdateInventoryStockLevels } from "@/src/hooks/inventory/useUpdateInventoryStockLevels";
 
 import type {
@@ -147,19 +149,25 @@ export default function EditInventoryLevelsDialog({
             inventory.id,
             {
                 par_level: parLevel,
-                reorder_level:
-                    reorderLevel,
+                reorder_level: reorderLevel,
             }
         );
-
+        
         if (!response) {
             return;
         }
-
+        
+        toast.add({
+            title: "Inventory Updated",
+            description:
+                "Inventory stock levels have been updated successfully.",
+            type: "success",
+        });
+        
         onUpdated?.();
-
+        
         setFormData(initialFormData);
-
+        
         onOpenChange(false);
     };
 

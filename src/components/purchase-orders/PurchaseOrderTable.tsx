@@ -45,6 +45,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { Input } from "@/components/ui/input";
 
+import { toast } from "@/components/ui/toast";
+
 import BulkApprovePurchaseOrderDialog from "@/src/components/purchase-orders/BulkApprovePurchaseOrderDialog";
 import BulkRejectPurchaseOrderDialog from "@/src/components/purchase-orders/BulkRejectPurchaseOrderDialog";
 import PurchaseOrderTableToolbar from "@/src/components/purchase-orders/PurchaseOrderTableToolbar";
@@ -624,24 +626,53 @@ export default function PurchaseOrderTable({
             return;
         }
 
+        toast.add({
+            title: "Purchase Orders Approved",
+            description:
+                `${selectedPurchaseOrderIds.length} purchase order${
+                    selectedPurchaseOrderIds.length !== 1
+                        ? "s have"
+                        : " has"
+                } been approved successfully.`,
+            type: "success",
+        });
+
         setBulkApproveOpen(false);
         setSelectedPurchaseOrderIds([]);
 
         onUpdated?.();
     };
 
-    const handleBulkReject = async (rejectionReason: string) => {
-        if (selectedPurchaseOrderIds.length === 0) return;
-
+    const handleBulkReject = async (
+        rejectionReason: string
+    ) => {
+        if (selectedPurchaseOrderIds.length === 0) {
+            return;
+        }
+    
         const result = await bulkReject(
             selectedPurchaseOrderIds,
             rejectionReason
         );
-
-        if (!result) return;
-
+    
+        if (!result) {
+            return;
+        }
+    
+        toast.add({
+            title: "Purchase Orders Rejected",
+            description:
+                `${selectedPurchaseOrderIds.length} purchase order${
+                    selectedPurchaseOrderIds.length !== 1
+                        ? "s have"
+                        : " has"
+                } been rejected successfully.`,
+            type: "success",
+        });
+    
         setBulkRejectOpen(false);
         setSelectedPurchaseOrderIds([]);
+    
         onUpdated?.();
     };
 
@@ -652,12 +683,12 @@ export default function PurchaseOrderTable({
                     <h2 className="text-base font-semibold text-slate-900">
                         Purchase Orders
                     </h2>
-                
+
                     <p className="mt-1 text-xs text-slate-500">
                         View and manage purchase order requests.
                     </p>
                 </div>
-                
+
                 <PurchaseOrderTableToolbar
                     search={search}
                     branch={branchFilter}

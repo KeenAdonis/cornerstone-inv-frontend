@@ -11,6 +11,8 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
+import { toast } from "@/components/ui/toast";
+
 import {
     Dialog,
     DialogContent,
@@ -424,15 +426,22 @@ export default function StockAdjustmentDialog({
             await create(
                 stockAdjustmentData
             );
-
+        
         if (!response) {
             return;
         }
-
+        
+        toast.add({
+            title: "Stock Adjustment Saved",
+            description:
+                "Stock adjustment has been saved successfully.",
+            type: "success",
+        });
+        
         onCreated?.();
-
+        
         setFormData(initialFormData);
-
+        
         onOpenChange(false);
     };
 

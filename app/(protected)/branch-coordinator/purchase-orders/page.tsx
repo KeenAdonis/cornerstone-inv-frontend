@@ -6,6 +6,8 @@ import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
+import { toast } from "@/components/ui/toast";
+
 import PurchaseOrderTable from "@/src/components/purchase-orders/PurchaseOrderTable";
 import ViewPurchaseOrderDialog from "@/src/components/purchase-orders/ViewPurchaseOrderDialog";
 import ViewPurchaseOrderAttachmentDialog from "@/src/components/purchase-orders/ViewPurchaseOrderAttachmentDialog";
@@ -73,20 +75,27 @@ export default function PurchaseOrdersPage() {
         if (!deliveryPurchaseOrder) {
             return;
         }
-
+    
         const updatedPurchaseOrder =
             await deliver(
                 deliveryPurchaseOrder.id,
                 deliveryPhoto,
                 dateOfArrival
             );
-
+        
         if (!updatedPurchaseOrder) {
             return;
         }
-
+    
+        toast.add({
+            title: "Purchase Order Delivered",
+            description:
+                "Purchase order has been marked as delivered successfully.",
+            type: "success",
+        });
+    
         setDeliveryPurchaseOrder(null);
-
+    
         await refetch();
     };
 

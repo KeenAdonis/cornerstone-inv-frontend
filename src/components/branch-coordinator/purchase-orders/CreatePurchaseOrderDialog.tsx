@@ -11,6 +11,8 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
+import { toast } from "@/components/ui/toast";
+
 import {
     Dialog,
     DialogContent,
@@ -301,21 +303,28 @@ export default function CreatePurchaseOrderDialog({
             };
 
         const response =
-            await create(
-                purchaseOrderData
-            );
+    await create(
+        purchaseOrderData
+    );
 
-        if (!response) {
-            return;
-        }
+if (!response) {
+    return;
+}
 
-        onCreated?.();
+toast.add({
+    title: "Purchase Order Created",
+    description:
+        "Purchase order has been created successfully.",
+    type: "success",
+});
 
-        setFormData(
-            initialFormData
-        );
+onCreated?.();
 
-        onOpenChange(false);
+setFormData(
+    initialFormData
+);
+
+onOpenChange(false);
     };
 
     const handleOpenChange = (

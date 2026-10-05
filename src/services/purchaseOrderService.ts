@@ -758,3 +758,26 @@ export async function bulkRejectPurchaseOrders(
         }
     ).data.purchase_orders;
 }
+
+export async function getPendingPurchaseOrderCount(): Promise<number> {
+    const response = await fetch(
+        `${API_BASE_URL}/purchase-orders/pending-count`,
+        {
+            method: "GET",
+            credentials: "include",
+            headers: {
+                Accept: "application/json",
+            },
+        }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(
+            data?.message ?? "Failed to fetch pending purchase order count."
+        );
+    }
+
+    return data?.data?.count ?? 0;
+}

@@ -24,6 +24,8 @@ import {
 
 import { Input } from "@/components/ui/input";
 
+import { toast } from "@/components/ui/toast";
+
 import {
     useActiveLocationContext,
 } from "@/src/context/ActiveLocationContext";
@@ -318,17 +320,24 @@ export default function InventoryCountDialog({
             await submitInventoryCount(
                 inventoryCountData
             );
-
+        
         if (!response) {
             return;
         }
-
+        
+        toast.add({
+            title: "Inventory Count Saved",
+            description:
+                "Inventory count has been saved successfully.",
+            type: "success",
+        });
+        
         onCreated?.();
-
+        
         setItems([]);
         setNotes("");
         reset();
-
+        
         onOpenChange(false);
     };
 
@@ -497,48 +506,48 @@ export default function InventoryCountDialog({
                                                     <td className="px-4 py-3">
                                                         <div className="flex justify-end">
                                                             <div className="flex flex-col items-end">
-    <Input
-        type="number"
-        min="0"
-        step="0.01"
-        value={
-            formItem
-                ?.counted_quantity ??
-            ""
-        }
-        onChange={(event) =>
-            updateCountedQuantity(
-                item.id,
-                event.target.value
-            )
-        }
-        disabled={isLoading}
-        className={
-            invalidInventoryIds.includes(
-                item.id
-            )
-                ? "w-32 border-red-400 bg-red-50 text-right text-red-700 focus-visible:border-red-500 focus-visible:ring-red-100"
-                : "w-32 border-slate-200 bg-white text-right text-slate-900 focus-visible:border-blue-400 focus-visible:ring-blue-100"
-        }
-    />
+                                                                <Input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    step="0.01"
+                                                                    value={
+                                                                        formItem
+                                                                            ?.counted_quantity ??
+                                                                        ""
+                                                                    }
+                                                                    onChange={(event) =>
+                                                                        updateCountedQuantity(
+                                                                            item.id,
+                                                                            event.target.value
+                                                                        )
+                                                                    }
+                                                                    disabled={isLoading}
+                                                                    className={
+                                                                        invalidInventoryIds.includes(
+                                                                            item.id
+                                                                        )
+                                                                            ? "w-32 border-red-400 bg-red-50 text-right text-red-700 focus-visible:border-red-500 focus-visible:ring-red-100"
+                                                                            : "w-32 border-slate-200 bg-white text-right text-slate-900 focus-visible:border-blue-400 focus-visible:ring-blue-100"
+                                                                    }
+                                                                />
 
-    {invalidInventoryIds.includes(
-        item.id
-    ) && (
-        <p className="mt-1 max-w-55 text-right text-xs text-red-600">
-            Physical Count cannot exceed to{" "}
-            {Number(
-                item.quantity
-            ).toLocaleString(
-                "en-PH",
-                {
-                    maximumFractionDigits: 2,
-                }
-            )}
-            .
-        </p>
-    )}
-</div>
+                                                                {invalidInventoryIds.includes(
+                                                                    item.id
+                                                                ) && (
+                                                                    <p className="mt-1 max-w-55 text-right text-xs text-red-600">
+                                                                        Physical Count cannot exceed to{" "}
+                                                                        {Number(
+                                                                            item.quantity
+                                                                        ).toLocaleString(
+                                                                            "en-PH",
+                                                                            {
+                                                                                maximumFractionDigits: 2,
+                                                                            }
+                                                                        )}
+                                                                        .
+                                                                    </p>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </td>
                                                 </tr>

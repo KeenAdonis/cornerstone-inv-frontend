@@ -259,7 +259,7 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                             {purchaseOrder
                                 .warehouse
                                 ?.code && (
-                                <p className="mt-0.5 text-[8px] text-slate-600">
+                                <p className="mt-0.5 text-[8px] font-medium text-slate-900">
                                     Code:{" "}
                                     {
                                         purchaseOrder
@@ -289,7 +289,7 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                             {purchaseOrder
                                 .branch
                                 ?.code && (
-                                <p className="mt-0.5 text-[8px] text-slate-600">
+                                <p className="mt-0.5 text-[8px] font-medium text-slate-900">
                                     Code:{" "}
                                     {
                                         purchaseOrder
@@ -477,18 +477,18 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                                             }
                                             className="break-inside-avoid"
                                         >
-                                            <td className="border border-slate-300 px-1.5 py-[3px] text-center text-[8px] leading-tight text-slate-700">
+                                            <td className="border border-slate-300 px-1.5 py-[3px] text-center text-[8px] leading-tight text-slate-900">
                                                 {index +
                                                     1}
                                             </td>
 
                                             <td className="border border-slate-300 px-1.5 py-[3px] text-right text-[8px] font-semibold leading-tight text-slate-900">
-                                                {
-                                                    item.quantity
-                                                }
+                                                {Number(item.quantity || 0).toLocaleString("en-PH", {
+                                                    maximumFractionDigits: 0,
+                                                })}
                                             </td>
 
-                                            <td className="border border-slate-300 px-1.5 py-[3px] text-left text-[8px] leading-tight text-slate-700">
+                                            <td className="border border-slate-300 px-1.5 py-[3px] text-left text-[8px] font-medium leading-tight text-slate-900">
                                                 {item
                                                     .product
                                                     ?.unit ??
@@ -502,21 +502,21 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                                                     "—"}
                                             </td>
 
-                                            <td className="overflow-hidden border border-slate-300 px-1.5 py-[3px] text-left text-[8px] leading-tight text-slate-700">
+                                            <td className="overflow-hidden border border-slate-300 px-1.5 py-[3px] text-left text-[8px] font-medium leading-tight text-slate-900">
                                                 {item
                                                     .product
                                                     ?.product_code ??
                                                     "—"}
                                             </td>
 
-                                            <td className="overflow-hidden border border-slate-300 px-1.5 py-[3px] text-left text-[8px] leading-tight text-slate-700">
+                                            <td className="overflow-hidden border border-slate-300 px-1.5 py-[3px] text-left text-[8px] font-medium leading-tight text-slate-900">
                                                 {item
                                                     .product
                                                     ?.sku ??
                                                     "—"}
                                             </td>
 
-                                            <td className="border border-slate-300 px-1.5 py-[3px] text-right text-[8px] leading-tight text-slate-800">
+                                            <td className="border border-slate-300 px-1.5 py-[3px] text-right text-[8px] font-medium leading-tight text-slate-900">
                                                 {formatCurrency(
                                                     srp
                                                 )}

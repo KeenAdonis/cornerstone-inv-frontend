@@ -1,6 +1,7 @@
 "use client";
 
 import {
+    type ChangeEvent,
     useEffect,
     useState,
 } from "react";
@@ -8,7 +9,6 @@ import {
 import {
     Camera,
     ImagePlus,
-    RotateCcw,
     Upload,
     X,
 } from "lucide-react";
@@ -24,8 +24,6 @@ import {
 
 import { Button } from "@/components/ui/button";
 
-import { Input } from "@/components/ui/input";
-
 import { format } from "date-fns";
 
 import { DatePicker } from "@/components/ui/date-picker";
@@ -40,7 +38,7 @@ interface CompletePurchaseOrderDialogProps {
     onOpenChange: (open: boolean) => void;
 
     onComplete: (
-        file: File,
+        files: File[],
         dateOfArrival: string
     ) => Promise<void>;
 
@@ -65,11 +63,11 @@ export default function CompletePurchaseOrderDialog({
     completing = false,
     error = null,
 }: CompletePurchaseOrderDialogProps) {
-    const [selectedFile, setSelectedFile] =
-        useState<File | null>(null);
+    const [selectedFiles, setSelectedFiles] =
+        useState<File[]>([]);
 
-    const [previewUrl, setPreviewUrl] =
-        useState<string | null>(null);
+    const [previewUrls, setPreviewUrls] =
+        useState<string[]>([]);
 
     const [dateOfArrival, setDateOfArrival] =
         useState("");
@@ -79,82 +77,115 @@ export default function CompletePurchaseOrderDialog({
 
     useEffect(() => {
         if (!open) {
-            setSelectedFile(null);
-            setPreviewUrl(null);
+            setSelectedFiles([]);
+            setPreviewUrls([]);
             setDateOfArrival("");
             setValidationError(null);
         }
     }, [open]);
 
     useEffect(() => {
-        if (!selectedFile) {
-            setPreviewUrl(null);
+        const urls = selectedFiles.map((file) =>
+            URL.createObjectURL(file)
+        );
 
-            return;
-        }
-
-        const objectUrl =
-            URL.createObjectURL(
-                selectedFile
-            );
-
-        setPreviewUrl(objectUrl);
+        setPreviewUrls(urls);
 
         return () => {
-            URL.revokeObjectURL(
-                objectUrl
-            );
+            urls.forEach((url) => {
+                URL.revokeObjectURL(url);
+            });
         };
-    }, [selectedFile]);
+    }, [selectedFiles]);
 
     const handleFileChange = (
-        event: React.ChangeEvent<HTMLInputElement>
+        event: ChangeEvent<HTMLInputElement>
     ) => {
-        const file =
-            event.target.files?.[0] ??
-            null;
+        const files = Array.from(
+            event.target.files ?? []
+        );
 
+        // Allow selecting the same file again.
         event.target.value = "";
+
+        if (!files.length) {
+            return;
+        }
 
         setValidationError(null);
 
-        if (!file) {
-            return;
-        }
+        const invalidType = files.find(
+            (file) =>
+                !ACCEPTED_FILE_TYPES.includes(
+                    file.type
+                )
+        );
 
-        if (
-            !ACCEPTED_FILE_TYPES.includes(
-                file.type
-            )
-        ) {
-            setSelectedFile(null);
-
+        if (invalidType) {
             setValidationError(
-                "Please select a JPG, JPEG, PNG, or WebP image."
+                `"${invalidType.name}" is not a supported image type. Please use JPG, JPEG, PNG, or WebP.`
             );
 
             return;
         }
 
-        if (
-            file.size >
-            MAX_FILE_SIZE
-        ) {
-            setSelectedFile(null);
+        const oversizedFile = files.find(
+            (file) =>
+                file.size > MAX_FILE_SIZE
+        );
 
+        if (oversizedFile) {
             setValidationError(
-                "The proof of delivery image must not exceed 5 MB."
+                `"${oversizedFile.name}" exceeds the 5 MB file size limit.`
             );
 
             return;
         }
 
-        setSelectedFile(file);
+        setSelectedFiles((currentFiles) => {
+            const existingKeys = new Set(
+                currentFiles.map(
+                    (file) =>
+                        `${file.name}-${file.size}-${file.lastModified}`
+                )
+            );
+
+            const newFiles = files.filter(
+                (file) => {
+                    const key =
+                        `${file.name}-${file.size}-${file.lastModified}`;
+
+                    if (
+                        existingKeys.has(
+                            key
+                        )
+                    ) {
+                        return false;
+                    }
+
+                    existingKeys.add(key);
+
+                    return true;
+                }
+            );
+
+            return [
+                ...currentFiles,
+                ...newFiles,
+            ];
+        });
     };
 
-    const handleRemoveFile = () => {
-        setSelectedFile(null);
-        setPreviewUrl(null);
+    const handleRemoveFile = (
+        index: number
+    ) => {
+        setSelectedFiles((currentFiles) =>
+            currentFiles.filter(
+                (_, fileIndex) =>
+                    fileIndex !== index
+            )
+        );
+
         setValidationError(null);
     };
 
@@ -167,9 +198,9 @@ export default function CompletePurchaseOrderDialog({
             return;
         }
 
-        if (!selectedFile) {
+        if (!selectedFiles.length) {
             setValidationError(
-                "Please upload a proof of delivery photo."
+                "Please upload at least one proof of delivery photo."
             );
 
             return;
@@ -178,7 +209,7 @@ export default function CompletePurchaseOrderDialog({
         setValidationError(null);
 
         await onComplete(
-            selectedFile,
+            selectedFiles,
             dateOfArrival
         );
     };
@@ -262,11 +293,16 @@ export default function CompletePurchaseOrderDialog({
                             onChange={(date) => {
                                 setDateOfArrival(
                                     date
-                                        ? format(date, "yyyy-MM-dd")
+                                        ? format(
+                                              date,
+                                              "yyyy-MM-dd"
+                                          )
                                         : ""
                                 );
-                            
-                                setValidationError(null);
+
+                                setValidationError(
+                                    null
+                                );
                             }}
                             placeholder="Select arrival date"
                             disabled={completing}
@@ -289,13 +325,15 @@ export default function CompletePurchaseOrderDialog({
                             </p>
 
                             <p className="mt-1 text-xs text-slate-500">
-                                Take a photo or upload a clear image of the delivered items or delivery receipt.
+                                Take photos or upload clear images of the delivered items or delivery receipt.
                             </p>
                         </div>
 
-                        {!selectedFile ? (
+                        {selectedFiles.length ===
+                        0 ? (
+                            /* Empty State */
                             <div className="rounded-md border border-dashed border-blue-200 bg-blue-50/30 px-5 py-8 text-center">
-                                <div className="flex h-11 w-11 mx-auto items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 text-blue-600">
                                     <ImagePlus className="h-5 w-5" />
                                 </div>
 
@@ -304,7 +342,8 @@ export default function CompletePurchaseOrderDialog({
                                 </p>
 
                                 <p className="mt-1 text-xs text-slate-500">
-                                    JPG, PNG, or WebP · Maximum 5 MB
+                                    You can upload multiple photos.
+                                    JPG, PNG, or WebP · Maximum 5 MB per photo
                                 </p>
 
                                 {/* Upload Options */}
@@ -329,7 +368,7 @@ export default function CompletePurchaseOrderDialog({
                                         <input
                                             id="delivery-photo-camera"
                                             type="file"
-                                            accept="image/*"
+                                            accept="image/jpeg,image/png,image/webp"
                                             capture="environment"
                                             onChange={
                                                 handleFileChange
@@ -356,12 +395,13 @@ export default function CompletePurchaseOrderDialog({
                                     >
                                         <Upload className="h-4 w-4" />
 
-                                        Choose Photo
+                                        Choose Photos
 
                                         <input
                                             id="delivery-photo"
                                             type="file"
                                             accept="image/jpeg,image/png,image/webp"
+                                            multiple
                                             onChange={
                                                 handleFileChange
                                             }
@@ -374,72 +414,102 @@ export default function CompletePurchaseOrderDialog({
                                 </div>
                             </div>
                         ) : (
-                            <div className="overflow-hidden rounded-md border border-slate-200 bg-slate-50">
-                                {/* Preview */}
-                                {previewUrl && (
-                                    <div className="relative flex max-h-[42vh] items-center justify-center overflow-hidden bg-slate-100">
-                                        <img
-                                            src={
-                                                previewUrl
-                                            }
-                                            alt="Proof of delivery preview"
-                                            className="max-h-[42vh] w-full object-contain"
-                                        />
-
-                                        {!completing && (
-                                            <Button
-                                                type="button"
-                                                variant="secondary"
-                                                size="icon"
-                                                onClick={
-                                                    handleRemoveFile
-                                                }
-                                                className="absolute right-3 top-3 h-8 w-8 rounded-full bg-white/95 text-slate-600 shadow-sm hover:bg-white hover:text-red-600"
+                            /* Selected Photos */
+                            <div className="space-y-3">
+                                {/* Photo Grid */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    {selectedFiles.map(
+                                        (
+                                            file,
+                                            index
+                                        ) => (
+                                            <div
+                                                key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
+                                                className="overflow-hidden rounded-md border border-slate-200 bg-slate-50"
                                             >
-                                                <X className="h-4 w-4" />
+                                                {/* Preview */}
+                                                <div className="relative aspect-square overflow-hidden bg-slate-100">
+                                                    {previewUrls[
+                                                        index
+                                                    ] && (
+                                                        <img
+                                                            src={
+                                                                previewUrls[
+                                                                    index
+                                                                ]
+                                                            }
+                                                            alt={`Proof of delivery ${index + 1}`}
+                                                            className="h-full w-full object-contain"
+                                                        />
+                                                    )}
 
-                                                <span className="sr-only">
-                                                    Remove proof of delivery
-                                                </span>
-                                            </Button>
-                                        )}
-                                    </div>
-                                )}
+                                                    {!completing && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="secondary"
+                                                            size="icon"
+                                                            onClick={() =>
+                                                                handleRemoveFile(
+                                                                    index
+                                                                )
+                                                            }
+                                                            className="absolute right-2 top-2 h-8 w-8 rounded-full bg-white/95 text-slate-600 shadow-sm hover:bg-white hover:text-red-600"
+                                                        >
+                                                            <X className="h-4 w-4" />
 
-                                {/* File Information */}
-                                <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-3">
-                                    <div className="min-w-0">
-                                        <p className="truncate text-sm font-medium text-slate-800">
-                                            {
-                                                selectedFile.name
-                                            }
-                                        </p>
+                                                            <span className="sr-only">
+                                                                Remove proof of delivery
+                                                            </span>
+                                                        </Button>
+                                                    )}
+                                                </div>
 
-                                        <p className="mt-0.5 text-xs text-slate-500">
-                                            {(
-                                                selectedFile.size /
-                                                1024 /
-                                                1024
-                                            ).toFixed(
-                                                2
-                                            )}{" "}
-                                            MB
-                                        </p>
-                                    </div>
+                                                {/* File Information */}
+                                                <div className="border-t border-slate-200 bg-white px-3 py-2">
+                                                    <p
+                                                        className="truncate text-xs font-medium text-slate-800"
+                                                        title={
+                                                            file.name
+                                                        }
+                                                    >
+                                                        {
+                                                            file.name
+                                                        }
+                                                    </p>
 
-                                    {!completing && (
+                                                    <p className="mt-0.5 text-[11px] text-slate-500">
+                                                        {(
+                                                            file.size /
+                                                            1024 /
+                                                            1024
+                                                        ).toFixed(
+                                                            2
+                                                        )}{" "}
+                                                        MB
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+
+                                {/* Add More Photos */}
+                                {!completing && (
+                                    <div className="flex flex-col gap-2 sm:flex-row">
+                                        {/* Camera */}
                                         <label
-                                            htmlFor="delivery-photo-replace"
-                                            className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700"
+                                            htmlFor="delivery-photo-camera-add"
+                                            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-sm border border-blue-200 bg-white px-4 py-2.5 text-xs font-medium text-blue-700 shadow-sm transition hover:bg-blue-50"
                                         >
-                                            <RotateCcw className="h-3.5 w-3.5" />
+                                            <Camera className="h-4 w-4" />
 
-                                            Replace
+                                            Add from Camera
 
                                             <input
-                                                id="delivery-photo-replace"
+                                                id="delivery-photo-camera-add"
                                                 type="file"
                                                 accept="image/jpeg,image/png,image/webp"
+                                                capture="environment"
                                                 onChange={
                                                     handleFileChange
                                                 }
@@ -449,8 +519,32 @@ export default function CompletePurchaseOrderDialog({
                                                 className="sr-only"
                                             />
                                         </label>
-                                    )}
-                                </div>
+
+                                        {/* Upload */}
+                                        <label
+                                            htmlFor="delivery-photo-add"
+                                            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-sm border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+                                        >
+                                            <ImagePlus className="h-4 w-4" />
+
+                                            Add More Photos
+
+                                            <input
+                                                id="delivery-photo-add"
+                                                type="file"
+                                                accept="image/jpeg,image/png,image/webp"
+                                                multiple
+                                                onChange={
+                                                    handleFileChange
+                                                }
+                                                disabled={
+                                                    completing
+                                                }
+                                                className="sr-only"
+                                            />
+                                        </label>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -495,7 +589,8 @@ export default function CompletePurchaseOrderDialog({
                         }
                         disabled={
                             completing ||
-                            !selectedFile ||
+                            selectedFiles.length ===
+                                0 ||
                             !dateOfArrival
                         }
                         className="rounded-sm bg-emerald-600 text-white hover:bg-emerald-700"

@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 
+import { toast } from "@/components/ui/toast";
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -46,6 +48,13 @@ export default function DeleteCategoryDialog({
         if (!response) {
             return;
         }
+
+        toast.add({
+            title: "Category Deleted",
+            description:
+                "Category has been deleted successfully.",
+            type: "success",
+        });
 
         onDeleted?.();
         onOpenChange(false);

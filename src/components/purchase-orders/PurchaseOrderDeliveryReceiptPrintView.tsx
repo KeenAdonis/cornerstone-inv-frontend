@@ -9,6 +9,12 @@ interface PurchaseOrderDeliveryReceiptPrintViewProps {
     printMode?: "po" | "delivery-receipt" | null;
 }
 
+/*
+|--------------------------------------------------------------------------
+| Delivery Type
+|--------------------------------------------------------------------------
+*/
+
 const getDeliveryTypeLabel = (
     deliveryType: PurchaseOrder["delivery_type"]
 ): string => {
@@ -29,6 +35,12 @@ const getDeliveryTypeLabel = (
 
     return labels[deliveryType];
 };
+
+/*
+|--------------------------------------------------------------------------
+| Date Formatting
+|--------------------------------------------------------------------------
+*/
 
 const formatDate = (
     value: string | null
@@ -68,6 +80,30 @@ const formatDate = (
     );
 };
 
+/*
+|--------------------------------------------------------------------------
+| Currency Formatting
+|--------------------------------------------------------------------------
+*/
+
+const formatCurrency = (
+    value: number
+): string => {
+    return new Intl.NumberFormat(
+        "en-PH",
+        {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }
+    ).format(value);
+};
+
+/*
+|--------------------------------------------------------------------------
+| Component
+|--------------------------------------------------------------------------
+*/
+
 export default function PurchaseOrderDeliveryReceiptPrintView({
     purchaseOrder,
     printMode = null,
@@ -79,16 +115,61 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
     const isPrintTarget =
         printMode === "delivery-receipt";
 
+    /*
+    |--------------------------------------------------------------------------
+    | Receipt Items
+    |--------------------------------------------------------------------------
+    |
+    | Keep the printed receipt compact.
+    | Maximum of 20 products/items.
+    |
+    */
+
+    const receiptItems =
+        purchaseOrder.items.slice(
+            0,
+            20
+        );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Totals
+    |--------------------------------------------------------------------------
+    */
+
     const totalQuantity =
-        purchaseOrder.items.reduce(
+        receiptItems.reduce(
             (total, item) =>
                 total +
-                Number(item.quantity || 0),
+                Number(
+                    item.quantity || 0
+                ),
+            0
+        );
+
+    const totalAmount =
+        receiptItems.reduce(
+            (total, item) => {
+                const quantity =
+                    Number(
+                        item.quantity || 0
+                    );
+
+                const srp =
+                    Number(
+                        item.product?.srp || 0
+                    );
+
+                return (
+                    total +
+                    quantity * srp
+                );
+            },
             0
         );
 
     const totalItems =
-        purchaseOrder.items.length;
+        receiptItems.length;
 
     return (
         <>
@@ -104,52 +185,50 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                 {/* HEADER */}
                 {/* ===================================================== */}
 
-                <header className="border-b-2 border-slate-900 pb-4">
-                    <div className="flex items-center justify-between gap-6">
-                        {/* ================================================= */}
+                <header className="border-b-2 border-slate-900 pb-2.5">
+                    <div className="flex items-center justify-between gap-4">
+
                         {/* LOGOS */}
-                        {/* ================================================= */}
 
                         <div className="flex min-w-0 items-center gap-3">
-                            {/* Logo 1 */}
-                            <div className="flex h-14 w-auto shrink-0 items-center">
+                            {/* Cornerstone Logo */}
+                            <div className="flex items-center">
                                 <img
                                     src="/business-logo/cornerstone-logo.png"
-                                    alt="Company Logo"
-                                    className="max-h-14 w-auto max-w-[150px] object-contain"
+                                    alt="Cornerstone Multi Sales"
+                                    className="h-auto max-h-10 w-auto max-w-[150px] object-contain"
                                 />
                             </div>
 
                             {/* Divider */}
-                            <div className="h-10 w-px shrink-0 bg-slate-300" />
+                            <div
+                                className="h-9 w-px shrink-0 bg-slate-300"
+                                aria-hidden="true"
+                            />
 
-                            {/* Logo 2 */}
-                            <div className="flex h-14 w-auto shrink-0 items-center">
+                            {/* CandyMix Logo */}
+                            <div className="flex items-center">
                                 <img
                                     src="/business-logo/candymix-logo.jpg"
-                                    alt="Company Logo"
-                                    className="max-h-14 w-auto max-w-[150px] object-contain"
+                                    alt="CandyMix"
+                                    className="h-auto max-h-10 w-auto max-w-[150px] object-contain"
                                 />
                             </div>
                         </div>
 
-                        {/* ================================================= */}
                         {/* DOCUMENT TITLE */}
-                        {/* ================================================= */}
 
                         <div className="shrink-0 text-right">
-                            <h2 className="text-xl font-bold uppercase text-slate-900">
+                            <h2 className="text-lg font-bold uppercase leading-none text-slate-900">
                                 Delivery Receipt
                             </h2>
 
-                            <p className="mt-1 text-sm font-semibold text-slate-700">
+                            <p className="mt-1 text-[8px] font-semibold uppercase tracking-wide text-slate-500">
                                 Reference PO
                             </p>
 
-                            <p className="font-mono text-sm font-bold text-slate-900">
-                                {
-                                    purchaseOrder.reference_number
-                                }
+                            <p className="text-xs font-bold leading-tight text-slate-900">
+                                {purchaseOrder.reference_number}
                             </p>
                         </div>
                     </div>
@@ -159,16 +238,16 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                 {/* DELIVERY INFORMATION */}
                 {/* ===================================================== */}
 
-                <section className="mt-5">
-                    <div className="grid grid-cols-2 gap-5">
+                <section className="mt-2.5">
+                    <div className="grid grid-cols-2 gap-2.5">
                         {/* FROM */}
 
-                        <div className="border border-slate-300 p-4">
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                        <div className="border border-slate-300 px-2.5 py-2">
+                            <p className="text-[8px] font-bold uppercase tracking-wide text-slate-500">
                                 From Warehouse
                             </p>
 
-                            <p className="mt-1 text-sm font-bold text-slate-900">
+                            <p className="mt-0.5 text-[10px] font-bold leading-tight text-slate-900">
                                 {
                                     purchaseOrder
                                         .warehouse
@@ -180,7 +259,7 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                             {purchaseOrder
                                 .warehouse
                                 ?.code && (
-                                <p className="mt-0.5 text-xs text-slate-600">
+                                <p className="mt-0.5 text-[8px] text-slate-600">
                                     Code:{" "}
                                     {
                                         purchaseOrder
@@ -193,12 +272,12 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
 
                         {/* TO */}
 
-                        <div className="border border-slate-300 p-4">
-                            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                        <div className="border border-slate-300 px-2.5 py-2">
+                            <p className="text-[8px] font-bold uppercase tracking-wide text-slate-500">
                                 Delivered To
                             </p>
 
-                            <p className="mt-1 text-sm font-bold text-slate-900">
+                            <p className="mt-0.5 text-[10px] font-bold leading-tight text-slate-900">
                                 {
                                     purchaseOrder
                                         .branch
@@ -210,7 +289,7 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                             {purchaseOrder
                                 .branch
                                 ?.code && (
-                                <p className="mt-0.5 text-xs text-slate-600">
+                                <p className="mt-0.5 text-[8px] text-slate-600">
                                     Code:{" "}
                                     {
                                         purchaseOrder
@@ -227,14 +306,14 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                 {/* DOCUMENT DETAILS */}
                 {/* ===================================================== */}
 
-                <section className="mt-5">
-                    <div className="grid grid-cols-3 gap-5 border border-slate-300 p-4">
+                <section className="mt-2.5">
+                    <div className="grid grid-cols-3 gap-x-3 gap-y-2 border border-slate-300 px-2.5 py-2">
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                            <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-500">
                                 PO Reference
                             </p>
 
-                            <p className="mt-1 font-mono text-sm font-semibold text-slate-900">
+                            <p className="mt-0.5 text-[9px] font-semibold leading-tight text-slate-900">
                                 {
                                     purchaseOrder.reference_number
                                 }
@@ -242,11 +321,11 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                         </div>
 
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                            <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-500">
                                 Delivery Type
                             </p>
 
-                            <p className="mt-1 text-sm font-medium text-slate-900">
+                            <p className="mt-0.5 text-[9px] font-medium leading-tight text-slate-900">
                                 {getDeliveryTypeLabel(
                                     purchaseOrder.delivery_type
                                 )}
@@ -254,11 +333,11 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                         </div>
 
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                            <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-500">
                                 Date of Arrival
                             </p>
 
-                            <p className="mt-1 text-sm font-medium text-slate-900">
+                            <p className="mt-0.5 text-[9px] font-medium leading-tight text-slate-900">
                                 {formatDate(
                                     purchaseOrder.date_of_arrival
                                 )}
@@ -266,11 +345,11 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                         </div>
 
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                            <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-500">
                                 Ship Out Date
                             </p>
 
-                            <p className="mt-1 text-sm text-slate-900">
+                            <p className="mt-0.5 text-[9px] leading-tight text-slate-900">
                                 {formatDate(
                                     purchaseOrder.ship_out_date
                                 )}
@@ -278,11 +357,11 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                         </div>
 
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                            <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-500">
                                 Requested By
                             </p>
 
-                            <p className="mt-1 text-sm text-slate-900">
+                            <p className="mt-0.5 text-[9px] leading-tight text-slate-900">
                                 {
                                     purchaseOrder
                                         .creator
@@ -293,11 +372,11 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                         </div>
 
                         <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                            <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-500">
                                 Printed Date
                             </p>
 
-                            <p className="mt-1 text-sm text-slate-900">
+                            <p className="mt-0.5 text-[9px] leading-tight text-slate-900">
                                 {formatDate(
                                     new Date()
                                         .toISOString()
@@ -315,13 +394,13 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                 {/* ITEMS */}
                 {/* ===================================================== */}
 
-                <section className="mt-6">
-                    <div className="mb-2 flex items-center justify-between">
-                        <h3 className="text-sm font-bold uppercase tracking-wide text-slate-900">
+                <section className="mt-3">
+                    <div className="mb-1 flex items-center justify-between">
+                        <h3 className="text-[9px] font-bold uppercase tracking-wide text-slate-900">
                             Delivered Items
                         </h3>
 
-                        <p className="text-xs text-slate-500">
+                        <p className="text-[8px] text-slate-500">
                             {totalItems} item
                             {totalItems !==
                             1
@@ -330,91 +409,157 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                         </p>
                     </div>
 
-                    <table className="w-full border-collapse border border-slate-300 text-sm">
+                    <table className="w-full table-fixed border-collapse border border-slate-300">
                         <thead>
                             <tr className="bg-slate-100">
-                                <th className="w-10 border border-slate-300 px-3 py-2 text-center text-xs font-bold text-slate-800">
+                                <th className="w-[4%] border border-slate-300 px-1.5 py-1 text-center text-[8px] font-bold leading-tight text-slate-800">
                                     #
                                 </th>
 
-                                <th className="border border-slate-300 px-3 py-2 text-left text-xs font-bold text-slate-800">
-                                    Product
+                                <th className="w-[10%] border border-slate-300 px-1.5 py-1 text-right text-[8px] font-bold leading-tight text-slate-800">
+                                    Quantity
                                 </th>
 
-                                <th className="w-32 border border-slate-300 px-3 py-2 text-left text-xs font-bold text-slate-800">
-                                    SKU
-                                </th>
-
-                                <th className="w-20 border border-slate-300 px-3 py-2 text-left text-xs font-bold text-slate-800">
+                                <th className="w-[9%] border border-slate-300 px-1.5 py-1 text-left text-[8px] font-bold leading-tight text-slate-800">
                                     Unit
                                 </th>
 
-                                <th className="w-24 border border-slate-300 px-3 py-2 text-right text-xs font-bold text-slate-800">
-                                    Quantity
+                                <th className="w-[42%] border border-slate-300 px-1.5 py-1 text-left text-[8px] font-bold leading-tight text-slate-800">
+                                    Product
+                                </th>
+
+                                <th className="w-[17%] border border-slate-300 px-1.5 py-1 text-left text-[8px] font-bold leading-tight text-slate-800">
+                                    Product Code
+                                </th>
+
+                                <th className="w-[17%] border border-slate-300 px-1.5 py-1 text-left text-[8px] font-bold leading-tight text-slate-800">
+                                    SKU
+                                </th>
+
+                                <th className="w-[9%] border border-slate-300 px-1.5 py-1 text-right text-[8px] font-bold leading-tight text-slate-800">
+                                    SRP
+                                </th>
+
+                                <th className="w-[11%] border border-slate-300 px-1.5 py-1 text-right text-[8px] font-bold leading-tight text-slate-800">
+                                    Amount
                                 </th>
                             </tr>
                         </thead>
 
                         <tbody>
-                            {purchaseOrder.items.map(
+                            {receiptItems.map(
                                 (
                                     item,
                                     index
-                                ) => (
-                                    <tr
-                                        key={
-                                            item.id
-                                        }
-                                    >
-                                        <td className="border border-slate-300 px-3 py-2 text-center text-slate-700">
-                                            {index +
-                                                1}
-                                        </td>
+                                ) => {
+                                    const quantity =
+                                        Number(
+                                            item.quantity ||
+                                                0
+                                        );
 
-                                        <td className="border border-slate-300 px-3 py-2 font-medium text-slate-900">
-                                            {item
+                                    const srp =
+                                        Number(
+                                            item
                                                 .product
-                                                ?.name ??
-                                                "—"}
-                                        </td>
+                                                ?.srp ||
+                                                0
+                                        );
 
-                                        <td className="border border-slate-300 px-3 py-2 font-mono text-xs text-slate-700">
-                                            {item
-                                                .product
-                                                ?.sku ??
-                                                "—"}
-                                        </td>
+                                    const amount =
+                                        quantity *
+                                        srp;
 
-                                        <td className="border border-slate-300 px-3 py-2 text-slate-700">
-                                            {item
-                                                .product
-                                                ?.unit ??
-                                                "—"}
-                                        </td>
-
-                                        <td className="border border-slate-300 px-3 py-2 text-right font-semibold text-slate-900">
-                                            {
-                                                item.quantity
+                                    return (
+                                        <tr
+                                            key={
+                                                item.id
                                             }
-                                        </td>
-                                    </tr>
-                                )
+                                            className="break-inside-avoid"
+                                        >
+                                            <td className="border border-slate-300 px-1.5 py-[3px] text-center text-[8px] leading-tight text-slate-700">
+                                                {index +
+                                                    1}
+                                            </td>
+
+                                            <td className="border border-slate-300 px-1.5 py-[3px] text-right text-[8px] font-semibold leading-tight text-slate-900">
+                                                {
+                                                    item.quantity
+                                                }
+                                            </td>
+
+                                            <td className="border border-slate-300 px-1.5 py-[3px] text-left text-[8px] leading-tight text-slate-700">
+                                                {item
+                                                    .product
+                                                    ?.unit ??
+                                                    "—"}
+                                            </td>
+
+                                            <td className="overflow-hidden border border-slate-300 px-1.5 py-[3px] text-left text-[8px] font-medium leading-tight text-slate-900">
+                                                {item
+                                                    .product
+                                                    ?.name ??
+                                                    "—"}
+                                            </td>
+
+                                            <td className="overflow-hidden border border-slate-300 px-1.5 py-[3px] text-left text-[8px] leading-tight text-slate-700">
+                                                {item
+                                                    .product
+                                                    ?.product_code ??
+                                                    "—"}
+                                            </td>
+
+                                            <td className="overflow-hidden border border-slate-300 px-1.5 py-[3px] text-left text-[8px] leading-tight text-slate-700">
+                                                {item
+                                                    .product
+                                                    ?.sku ??
+                                                    "—"}
+                                            </td>
+
+                                            <td className="border border-slate-300 px-1.5 py-[3px] text-right text-[8px] leading-tight text-slate-800">
+                                                {formatCurrency(
+                                                    srp
+                                                )}
+                                            </td>
+
+                                            <td className="border border-slate-300 px-1.5 py-[3px] text-right text-[8px] font-semibold leading-tight text-slate-900">
+                                                {formatCurrency(
+                                                    amount
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                }
                             )}
                         </tbody>
 
                         <tfoot>
                             <tr>
                                 <td
-                                    colSpan={4}
-                                    className="border border-slate-300 px-3 py-2 text-right text-xs font-bold uppercase text-slate-700"
+                                    colSpan={2}
+                                    className="border border-slate-300 px-1.5 py-1 text-right text-[8px] font-bold uppercase leading-tight text-slate-700"
                                 >
                                     Total Quantity
                                 </td>
 
-                                <td className="border border-slate-300 px-3 py-2 text-right text-sm font-bold text-slate-900">
+                                <td className="border border-slate-300 px-1.5 py-1 text-right text-[8px] font-bold leading-tight text-slate-900">
                                     {
                                         totalQuantity
                                     }
+                                </td>
+
+                                <td
+                                    colSpan={4}
+                                    className="border border-slate-300 px-1.5 py-1 text-right text-[8px] font-bold uppercase leading-tight text-slate-700"
+                                >
+                                    Total Amount
+                                </td>
+
+                                <td className="border border-slate-300 px-1.5 py-1 text-right text-[9px] font-bold leading-tight text-slate-900">
+                                    ₱{" "}
+                                    {formatCurrency(
+                                        totalAmount
+                                    )}
                                 </td>
                             </tr>
                         </tfoot>
@@ -425,21 +570,22 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                 {/* DELIVERY NOTES */}
                 {/* ===================================================== */}
 
-                <section className="mt-6">
-                    <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-900">
+                <section className="mt-2.5">
+                    <h3 className="mb-1 text-[9px] font-bold uppercase tracking-wide text-slate-900">
                         Delivery Notes
                     </h3>
 
-                    <div className="min-h-20 border border-slate-300 p-3">
+                    <div className="min-h-10 border border-slate-300 px-2.5 py-1.5">
                         {purchaseOrder.notes ? (
-                            <p className="whitespace-pre-wrap text-sm text-slate-800">
+                            <p className="whitespace-pre-wrap text-[8px] leading-4 text-slate-800">
                                 {
                                     purchaseOrder.notes
                                 }
                             </p>
                         ) : (
-                            <p className="text-sm italic text-slate-500">
-                                No delivery notes provided.
+                            <p className="text-[8px] italic leading-4 text-slate-500">
+                                No delivery notes
+                                provided.
                             </p>
                         )}
                     </div>
@@ -450,19 +596,19 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                 {/* ===================================================== */}
 
                 {purchaseOrder.delivery_photo_url && (
-                    <section className="mt-6">
-                        <h3 className="mb-2 text-sm font-bold uppercase tracking-wide text-slate-900">
+                    <section className="mt-2.5">
+                        <h3 className="mb-1 text-[9px] font-bold uppercase tracking-wide text-slate-900">
                             Proof of Delivery
                         </h3>
 
-                        <div className="border border-slate-300 p-3">
-                            <p className="text-sm text-slate-800">
+                        <div className="border border-slate-300 px-2.5 py-1.5">
+                            <p className="text-[8px] leading-4 text-slate-800">
                                 Proof of delivery
                                 has been uploaded
                                 for this delivery.
                             </p>
 
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="text-[8px] leading-4 text-slate-500">
                                 Date of Arrival:{" "}
                                 {formatDate(
                                     purchaseOrder.date_of_arrival
@@ -476,23 +622,23 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                 {/* SIGNATURES */}
                 {/* ===================================================== */}
 
-                <section className="mt-12">
-                    <div className="grid grid-cols-2 gap-20">
+                <section className="mt-5">
+                    <div className="grid grid-cols-2 gap-16">
                         {/* DELIVERED BY */}
 
                         <div>
-                            <div className="h-10 border-b border-slate-500" />
+                            <div className="h-7 border-b border-slate-500" />
 
-                            <p className="mt-2 text-xs font-semibold uppercase text-slate-700">
+                            <p className="mt-1 text-[8px] font-semibold uppercase leading-tight text-slate-700">
                                 Delivered By
                             </p>
 
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-0.5 text-[7px] leading-tight text-slate-500">
                                 Warehouse /
                                 Delivery Personnel
                             </p>
 
-                            <p className="mt-4 text-xs text-slate-500">
+                            <p className="mt-2 text-[7px] leading-tight text-slate-500">
                                 Date:
                                 ____________________
                             </p>
@@ -501,17 +647,17 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                         {/* RECEIVED BY */}
 
                         <div>
-                            <div className="h-10 border-b border-slate-500" />
+                            <div className="h-7 border-b border-slate-500" />
 
-                            <p className="mt-2 text-xs font-semibold uppercase text-slate-700">
+                            <p className="mt-1 text-[8px] font-semibold uppercase leading-tight text-slate-700">
                                 Received By
                             </p>
 
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-0.5 text-[7px] leading-tight text-slate-500">
                                 Branch Representative
                             </p>
 
-                            <p className="mt-4 text-xs text-slate-500">
+                            <p className="mt-2 text-[7px] leading-tight text-slate-500">
                                 Date:
                                 ____________________
                             </p>
@@ -523,8 +669,8 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                 {/* ACKNOWLEDGEMENT */}
                 {/* ===================================================== */}
 
-                <section className="mt-8 border border-slate-300 p-4">
-                    <p className="text-xs leading-5 text-slate-700">
+                <section className="mt-3 border border-slate-300 px-2.5 py-1.5">
+                    <p className="text-[7px] leading-3.5 text-slate-700">
                         I acknowledge receipt of
                         the items listed above in
                         good order and in the
@@ -537,8 +683,8 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                 {/* FOOTER */}
                 {/* ===================================================== */}
 
-                <footer className="mt-8 border-t border-slate-300 pt-3">
-                    <div className="flex items-center justify-between text-[10px] text-slate-500">
+                <footer className="mt-3 border-t border-slate-300 pt-1.5">
+                    <div className="flex items-center justify-between text-[7px] leading-tight text-slate-500">
                         <p>
                             Cornerstone Internal
                             Inventory System
@@ -559,7 +705,7 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                 @media print {
                     @page {
                         size: Letter portrait;
-                        margin: 0.5in;
+                        margin: 0.4in;
                     }
 
                     html,
@@ -584,12 +730,28 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                         top: 0;
                         left: 0;
                         width: 100%;
-                        min-height: 10in;
+                        min-height: 9.5in;
                         background: #ffffff;
+                        color: #000000;
+
+                        font-family:
+                            Arial,
+                            Helvetica,
+                            sans-serif;
                     }
 
                     #delivery-receipt-print table {
+                        width: 100%;
+                        border-collapse: collapse;
                         break-inside: auto;
+                    }
+
+                    #delivery-receipt-print thead {
+                        display: table-header-group;
+                    }
+
+                    #delivery-receipt-print tfoot {
+                        display: table-footer-group;
                     }
 
                     #delivery-receipt-print tr {
@@ -603,11 +765,15 @@ export default function PurchaseOrderDeliveryReceiptPrintView({
                         break-inside: avoid;
                     }
 
-                    /*
-                     * Keep logos visible when printing.
-                     */
+                    #delivery-receipt-print th,
+                    #delivery-receipt-print td {
+                        font-family:
+                            Arial,
+                            Helvetica,
+                            sans-serif;
+                    }
+
                     #delivery-receipt-print img {
-                        visibility: visible !important;
                         print-color-adjust: exact;
                         -webkit-print-color-adjust: exact;
                     }

@@ -8,6 +8,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 
+import { toast } from "@/components/ui/toast";
+
 import {
     Dialog,
     DialogContent,
@@ -111,6 +113,13 @@ export default function EditCategoryDialog({
         if (!response) {
             return;
         }
+
+        toast.add({
+            title: "Category Updated",
+            description:
+                "Category has been updated successfully.",
+            type: "success",
+        });
 
         onUpdated?.();
         onOpenChange(false);

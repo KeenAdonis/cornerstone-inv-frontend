@@ -11,6 +11,7 @@ export interface ProductCategory {
 export interface Product {
     id: number;
     category_id: number;
+    product_code: string | null;
     name: string;
     sku: string;
     unit: string;
@@ -22,6 +23,7 @@ export interface Product {
 
 export interface CreateProductData {
     category_id: number;
+    product_code?: string;
     name: string;
     sku: string;
     unit: string;
@@ -32,6 +34,7 @@ export interface CreateProductData {
 
 export interface UpdateProductData {
     category_id: number;
+    product_code?: string;
     name: string;
     sku: string;
     unit: string;

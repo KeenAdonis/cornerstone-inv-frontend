@@ -557,46 +557,60 @@ export default function ViewPurchaseOrderDialog({
                         {/* Delivery Information */}
                         {(
                             purchaseOrder.delivery_type ||
+                            purchaseOrder.tracking_number ||
                             purchaseOrder.ship_out_date ||
                             purchaseOrder.date_of_arrival
                         ) && (
                             <section>
                                 <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
                                     <CalendarDays className="h-4 w-4 text-blue-600" />
-
                                     Delivery Information
                                 </h3>
-
-                                <div className="grid gap-4 rounded-md border border-blue-100 bg-blue-50/40 p-4 sm:grid-cols-3">
+                        
+                                <div className="grid gap-4 rounded-md border border-blue-100 bg-blue-50/40 p-4 sm:grid-cols-2 lg:grid-cols-4">
+                                    {/* Delivery Type */}
                                     <div>
                                         <p className="text-xs text-slate-500">
                                             Delivery Type
                                         </p>
-
+                        
                                         <p className="mt-1 text-sm font-medium text-slate-800">
                                             {getDeliveryTypeLabel(
                                                 purchaseOrder.delivery_type
                                             )}
                                         </p>
                                     </div>
-
+                                        
+                                    {/* Tracking Number */}
+                                    <div>
+                                        <p className="text-xs text-slate-500">
+                                            Tracking Number
+                                        </p>
+                                        
+                                        <p className="mt-1 break-all text-sm font-medium text-slate-800">
+                                            {purchaseOrder.tracking_number || "—"}
+                                        </p>
+                                    </div>
+                                        
+                                    {/* Ship Out Date */}
                                     <div>
                                         <p className="text-xs text-slate-500">
                                             Ship Out Date
                                         </p>
-
+                                        
                                         <p className="mt-1 text-sm font-medium text-slate-800">
                                             {formatDate(
                                                 purchaseOrder.ship_out_date
                                             )}
                                         </p>
                                     </div>
-
+                                        
+                                    {/* Date of Arrival */}
                                     <div>
                                         <p className="text-xs text-slate-500">
                                             Date of Arrival
                                         </p>
-
+                                        
                                         <p className="mt-1 text-sm font-medium text-slate-800">
                                             {formatDate(
                                                 purchaseOrder.date_of_arrival

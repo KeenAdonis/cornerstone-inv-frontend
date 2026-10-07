@@ -110,22 +110,18 @@ export default function ProductTable({
                         !normalizedSearch ||
                         product.name
                             .toLowerCase()
-                            .includes(
-                                normalizedSearch
-                            ) ||
+                            .includes(normalizedSearch) ||
+                        (product.product_code ?? "")
+                            .toLowerCase()
+                            .includes(normalizedSearch) ||
                         product.sku
                             .toLowerCase()
-                            .includes(
-                                normalizedSearch
-                            ) ||
+                            .includes(normalizedSearch) ||
                         (
-                            product.description ??
-                            ""
+                            product.description ?? ""
                         )
                             .toLowerCase()
-                            .includes(
-                                normalizedSearch
-                            );
+                            .includes(normalizedSearch)
 
                     const matchesCategory =
                         categoryId === "all" ||
@@ -251,6 +247,10 @@ export default function ProductTable({
                                 </TableHead>
 
                                 <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Product Code
+                                </TableHead>
+
+                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
                                     SKU
                                 </TableHead>
 
@@ -291,7 +291,11 @@ export default function ProductTable({
                                             }
                                         </TableCell>
 
-                                        <TableCell className="font-mono text-sm text-slate-600">
+                                        <TableCell className="text-slate-600">
+                                            {product.product_code ?? "—"}
+                                        </TableCell>
+
+                                        <TableCell className="text-slate-600">
                                             {
                                                 product.sku
                                             }

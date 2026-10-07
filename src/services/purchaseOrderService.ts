@@ -30,8 +30,10 @@ export interface PurchaseOrderItem {
     product?: {
         id: number;
         name: string;
+        product_code: string;
         sku: string;
         unit: string;
+        srp: string;
     };
 }
 
@@ -44,7 +46,20 @@ export type DeliveryType =
 
 export interface ReleasePurchaseOrderPayload {
     delivery_type: DeliveryType;
+    tracking_number: string | null;
     ship_out_date: string;
+}
+
+export interface PurchaseOrderDeliveryAttachment {
+    id: number;
+    purchase_order_id: number;
+    file_name: string;
+    file_path: string;
+    mime_type: string | null;
+    file_size: number | null;
+    file_url: string;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface PurchaseOrder {
@@ -69,11 +84,14 @@ export interface PurchaseOrder {
     notes: string | null;
 
     delivery_type: DeliveryType | null;
+    tracking_number: string | null;
     ship_out_date: string | null;
     date_of_arrival: string | null;
 
     delivery_photo_path: string | null;
     delivery_photo_url: string | null;
+
+    delivery_attachments?: PurchaseOrderDeliveryAttachment[];
 
     created_at: string;
     updated_at: string;
@@ -465,7 +483,7 @@ export async function releasePurchaseOrder(
  */
 export async function deliverPurchaseOrder(
     purchaseOrderId: number,
-    deliveryPhoto: File,
+    deliveryPhotos: File[],
     dateOfArrival: string
 ): Promise<PurchaseOrder> {
     const csrfResponse = await fetch(
@@ -497,10 +515,12 @@ export async function deliverPurchaseOrder(
         "PATCH"
     );
 
-    formData.append(
-        "delivery_photo",
-        deliveryPhoto
-    );
+    deliveryPhotos.forEach((deliveryPhoto) => {
+        formData.append(
+            "delivery_photos[]",
+            deliveryPhoto
+        );
+    });
 
     formData.append(
         "date_of_arrival",

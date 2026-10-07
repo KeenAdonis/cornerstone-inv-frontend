@@ -11,7 +11,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+
 import { Input } from "@/components/ui/input";
+
+import { toast } from "@/components/ui/toast";
+
 import {
     Select,
     SelectContent,
@@ -68,20 +72,32 @@ export default function AddCategoryDialog({
 
         const categoryData: CreateCategoryData = {
             name: formData.name.trim(),
-            description: formData.description.trim() || undefined,
+            description:
+                formData.description.trim() ||
+                undefined,
             status:
                 formData.status as CreateCategoryData["status"],
         };
 
-        const response = await create(categoryData);
+        const response = await create(
+            categoryData
+        );
 
         if (!response) {
             return;
         }
 
+        toast.add({
+            title: "Category Created",
+            description:
+                "Category has been created successfully.",
+            type: "success",
+        });
+
         onCreated?.();
 
         setFormData(initialFormData);
+
         onOpenChange(false);
     };
 

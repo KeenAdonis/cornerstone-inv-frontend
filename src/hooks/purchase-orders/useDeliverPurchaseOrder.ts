@@ -13,7 +13,7 @@ import type {
 interface UseDeliverPurchaseOrderResult {
     deliver: (
         purchaseOrderId: number,
-        deliveryPhoto: File,
+        deliveryPhotos: File[],
         dateOfArrival: string
     ) => Promise<PurchaseOrder | null>;
 
@@ -33,7 +33,7 @@ export function useDeliverPurchaseOrder(): UseDeliverPurchaseOrderResult {
 
     const deliver = async (
         purchaseOrderId: number,
-        deliveryPhoto: File,
+        deliveryPhotos: File[],
         dateOfArrival: string
     ): Promise<PurchaseOrder | null> => {
         setLoading(true);
@@ -43,7 +43,7 @@ export function useDeliverPurchaseOrder(): UseDeliverPurchaseOrderResult {
             const purchaseOrder =
                 await deliverPurchaseOrder(
                     purchaseOrderId,
-                    deliveryPhoto,
+                    deliveryPhotos,
                     dateOfArrival
                 );
 

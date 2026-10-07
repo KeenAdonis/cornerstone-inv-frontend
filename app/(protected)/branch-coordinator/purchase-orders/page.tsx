@@ -69,7 +69,7 @@ export default function PurchaseOrdersPage() {
         };
 
     const handleDeliver = async (
-        deliveryPhoto: File,
+        deliveryPhotos: File[],
         dateOfArrival: string
     ) => {
         if (!deliveryPurchaseOrder) {
@@ -79,7 +79,7 @@ export default function PurchaseOrdersPage() {
         const updatedPurchaseOrder =
             await deliver(
                 deliveryPurchaseOrder.id,
-                deliveryPhoto,
+                deliveryPhotos,
                 dateOfArrival
             );
         

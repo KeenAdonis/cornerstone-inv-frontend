@@ -72,18 +72,32 @@ export default function ViewProductDialog({
                         </p>
                     </div>
 
-                    {/* SKU and Category */}
+                    {/* Product Code and SKU */}
                     <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-lg border border-slate-200 bg-white p-4">
+                            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                                Product Code
+                            </p>
+
+                            <p className="mt-1.5 text-sm font-medium text-slate-900">
+                                {product.product_code ||
+                                    "—"}
+                            </p>
+                        </div>
+
                         <div className="rounded-lg border border-slate-200 bg-white p-4">
                             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                                 SKU
                             </p>
 
-                            <p className="mt-1.5 font-mono text-sm font-medium text-slate-900">
+                            <p className="mt-1.5 text-sm font-medium text-slate-900">
                                 {product.sku}
                             </p>
                         </div>
+                    </div>
 
+                    {/* Category and Unit */}
+                    <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-lg border border-slate-200 bg-white p-4">
                             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                                 Category
@@ -94,10 +108,7 @@ export default function ViewProductDialog({
                                     "Uncategorized"}
                             </p>
                         </div>
-                    </div>
 
-                    {/* Unit and SRP */}
-                    <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-lg border border-slate-200 bg-white p-4">
                             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                                 Unit
@@ -107,25 +118,26 @@ export default function ViewProductDialog({
                                 {product.unit}
                             </p>
                         </div>
+                    </div>
 
-                        <div className="rounded-lg border border-slate-200 bg-white p-4">
-                            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                                Suggested Retail Price
-                            </p>
+                    {/* Suggested Retail Price */}
+                    <div className="rounded-lg border border-slate-200 bg-white p-4">
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            Suggested Retail Price
+                        </p>
 
-                            <p className="mt-1.5 text-sm font-semibold text-slate-900">
-                                ₱
-                                {Number(
-                                    product.srp
-                                ).toLocaleString(
-                                    "en-PH",
-                                    {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    }
-                                )}
-                            </p>
-                        </div>
+                        <p className="mt-1.5 text-sm font-semibold text-slate-900">
+                            ₱
+                            {Number(
+                                product.srp
+                            ).toLocaleString(
+                                "en-PH",
+                                {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                }
+                            )}
+                        </p>
                     </div>
 
                     {/* Description */}

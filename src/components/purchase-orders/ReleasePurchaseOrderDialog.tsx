@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 
 import { DatePicker } from "@/components/ui/date-picker";
 
+import { Input } from "@/components/ui/input";
+
 import {
     Dialog,
     DialogContent,
@@ -41,6 +43,7 @@ interface ReleasePurchaseOrderDialogProps {
     onOpenChange: (open: boolean) => void;
     onSubmit: (data: {
         delivery_type: DeliveryType;
+        tracking_number: string | null;
         ship_out_date: string;
     }) => void;
 }
@@ -84,6 +87,11 @@ export default function ReleasePurchaseOrderDialog({
     ] = useState<DeliveryType | "">("");
 
     const [
+        trackingNumber,
+        setTrackingNumber,
+    ] = useState("");
+
+    const [
         shipOutDate,
         setShipOutDate,
     ] = useState("");
@@ -96,6 +104,7 @@ export default function ReleasePurchaseOrderDialog({
     useEffect(() => {
         if (!open) {
             setDeliveryType("");
+            setTrackingNumber("");
             setShipOutDate("");
             setValidationError(null);
         }
@@ -105,6 +114,17 @@ export default function ReleasePurchaseOrderDialog({
         if (!deliveryType) {
             setValidationError(
                 "Please select a delivery type."
+            );
+
+            return;
+        }
+
+        if (
+            deliveryType !== "in_house" &&
+            !trackingNumber.trim()
+        ) {
+            setValidationError(
+                "Please enter the tracking number."
             );
 
             return;
@@ -122,6 +142,12 @@ export default function ReleasePurchaseOrderDialog({
 
         onSubmit({
             delivery_type: deliveryType,
+
+            tracking_number:
+                deliveryType === "in_house"
+                    ? null
+                    : trackingNumber.trim(),
+
             ship_out_date: shipOutDate,
         });
     };
@@ -192,9 +218,21 @@ export default function ReleasePurchaseOrderDialog({
                                 onValueChange={(
                                     value
                                 ) => {
+                                    const nextDeliveryType =
+                                        value as DeliveryType;
+
                                     setDeliveryType(
-                                        value as DeliveryType
+                                        nextDeliveryType
                                     );
+
+                                    if (
+                                        nextDeliveryType ===
+                                        "in_house"
+                                    ) {
+                                        setTrackingNumber(
+                                            ""
+                                        );
+                                    }
 
                                     setValidationError(
                                         null
@@ -209,15 +247,22 @@ export default function ReleasePurchaseOrderDialog({
                                     className="w-full border-slate-200 bg-white"
                                 >
                                     <SelectValue placeholder="Select delivery type">
-                                        {(value: string | null) => {
+                                        {(
+                                            value: string | null
+                                        ) => {
                                             const selectedOption =
                                                 deliveryTypeOptions.find(
-                                                    (option) =>
-                                                        option.value === value
+                                                    (
+                                                        option
+                                                    ) =>
+                                                        option.value ===
+                                                        value
                                                 );
-                                            
-                                            return selectedOption?.label ??
-                                                "Select delivery type";
+
+                                            return (
+                                                selectedOption?.label ??
+                                                "Select delivery type"
+                                            );
                                         }}
                                     </SelectValue>
                                 </SelectTrigger>
@@ -244,6 +289,37 @@ export default function ReleasePurchaseOrderDialog({
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {/* Tracking Number */}
+                        {deliveryType !==
+                            "in_house" &&
+                            deliveryType !==
+                                "" && (
+                                <div className="space-y-2">
+                                    <label
+                                        htmlFor="tracking-number"
+                                        className="text-sm font-medium text-slate-700"
+                                    >
+                                        Tracking Number
+
+                                        <span className="ml-1 text-red-500">
+                                            *
+                                        </span>
+                                    </label>
+
+                                    <Input
+                                        id="tracking-number"
+                                        value={trackingNumber}
+                                        onChange={(event) => {
+                                            setTrackingNumber(event.target.value);
+                                            setValidationError(null);
+                                        }}
+                                        placeholder="Enter tracking number"
+                                        disabled={loading}
+                                        className="border-slate-200 bg-white focus:border-blue-500 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                    />
+                                </div>
+                            )}
 
                         {/* Ship Out Date */}
                         <div className="space-y-2">

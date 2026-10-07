@@ -1032,7 +1032,11 @@ export default function PurchaseOrderTable({
                                                         </DropdownMenuItem>
 
                                                         {onViewAttachment &&
-                                                            purchaseOrder.delivery_photo_url && (
+                                                            (
+                                                                purchaseOrder.delivery_photo_url ||
+                                                                (purchaseOrder.delivery_attachments &&
+                                                                    purchaseOrder.delivery_attachments.length > 0)
+                                                            ) && (
                                                                 <>
                                                                     <DropdownMenuSeparator />
 

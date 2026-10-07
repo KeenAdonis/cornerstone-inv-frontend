@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 
+import { toast } from "@/components/ui/toast";
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -46,6 +48,13 @@ export default function DeleteProductDialog({
         if (!response) {
             return;
         }
+
+        toast.add({
+            title: "Product Deleted",
+            description:
+                "Product has been deleted successfully.",
+            type: "success",
+        });
 
         onDeleted?.();
         onOpenChange(false);

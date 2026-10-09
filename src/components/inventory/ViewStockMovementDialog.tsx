@@ -139,7 +139,7 @@ export default function ViewStockMovementDialog({
             open={open}
             onOpenChange={onOpenChange}
         >
-            <DialogContent className="border-blue-100 bg-white text-slate-900 sm:max-w-2xl">
+            <DialogContent className="flex max-h-[90dvh] flex-col overflow-hidden border-blue-100 bg-white text-slate-900 sm:max-w-2xl">
                 <DialogHeader className="border-b border-blue-100 pb-4">
                     <DialogTitle className="text-slate-900">
                         Stock Movement Details
@@ -151,7 +151,7 @@ export default function ViewStockMovementDialog({
                 </DialogHeader>
 
                 {stockMovement && (
-                    <div className="space-y-5">
+                    <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-1">
                         {/* Movement Information */}
                         <div className="rounded-lg border border-blue-100 bg-blue-50/50 px-4 py-4">
                             <div className="grid gap-4 sm:grid-cols-2">
@@ -356,7 +356,7 @@ export default function ViewStockMovementDialog({
                     </div>
                 )}
 
-                <DialogFooter className="border-t border-blue-100 bg-blue-50/60 pt-5">
+                <DialogFooter className="shrink-0 border-t border-blue-100 bg-blue-50/60 pt-4">
                     <Button
                         type="button"
                         variant="outline"

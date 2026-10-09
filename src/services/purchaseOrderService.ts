@@ -623,6 +623,70 @@ export async function completePurchaseOrder(
     ).data.purchase_order;
 }
 
+export async function deletePurchaseOrder(
+    purchaseOrderId: number
+): Promise<void> {
+    const csrfResponse = await fetch(
+        `${API_ORIGIN}/sanctum/csrf-cookie`,
+        {
+            method: "GET",
+            credentials: "include",
+        }
+    );
+
+    if (!csrfResponse.ok) {
+        throw new Error(
+            "Failed to initialize secure request."
+        );
+    }
+
+    const xsrfToken = getXsrfToken();
+
+    if (!xsrfToken) {
+        throw new Error(
+            "Unable to initialize CSRF protection."
+        );
+    }
+
+    const response = await fetch(
+        `${API_BASE_URL}/purchase-orders/${purchaseOrderId}`,
+        {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+                Accept: "application/json",
+                "X-XSRF-TOKEN": xsrfToken,
+            },
+        }
+    );
+
+    const data:
+        | {
+              success: boolean;
+              message: string;
+          }
+        | {
+              message?: string;
+              errors?: Record<string, string[]>;
+          } = await response.json();
+
+    if (!response.ok) {
+        const validationMessage =
+            "errors" in data && data.errors
+                ? Object.values(data.errors)
+                      .flat()
+                      .find(Boolean)
+                : undefined;
+
+        throw new Error(
+            validationMessage ??
+                data.message ??
+                "Failed to delete purchase order."
+        );
+    }
+}
+
+
 export interface BulkApprovePurchaseOrdersPayload {
     purchase_order_ids: number[];
 }

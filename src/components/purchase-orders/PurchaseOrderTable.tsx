@@ -16,6 +16,7 @@ import {
     CircleCheck,
     Paperclip,
     X,
+    Trash2,
 } from "lucide-react";
 
 import {
@@ -50,6 +51,7 @@ import { toast } from "@/components/ui/toast";
 import BulkApprovePurchaseOrderDialog from "@/src/components/purchase-orders/BulkApprovePurchaseOrderDialog";
 import BulkRejectPurchaseOrderDialog from "@/src/components/purchase-orders/BulkRejectPurchaseOrderDialog";
 import PurchaseOrderTableToolbar from "@/src/components/purchase-orders/PurchaseOrderTableToolbar";
+import DeletePurchaseOrderDialog from "@/src/components/purchase-orders/DeletePurchaseOrderDialog";
 
 import { useBulkApprovePurchaseOrders } from "@/src/hooks/purchase-orders/useBulkApprovePurchaseOrders";
 import { useBulkRejectPurchaseOrders } from "@/src/hooks/purchase-orders/useBulkRejectPurchaseOrders";
@@ -232,6 +234,14 @@ export default function PurchaseOrderTable({
     const { user } = useAuth();
 
     const isAdmin = user?.role === "admin";
+
+    const [
+        purchaseOrderToDelete,
+        setPurchaseOrderToDelete,
+    ] = useState<PurchaseOrder | null>(null);
+    
+    const [deleteDialogOpen, setDeleteDialogOpen] =
+        useState(false);
 
     const [currentPage, setCurrentPage] =
         useState(1);
@@ -1153,6 +1163,31 @@ export default function PurchaseOrderTable({
                                                                     </DropdownMenuItem>
                                                                 </>
                                                             )}
+
+                                                        {isAdmin &&
+                                                            [
+                                                                "approved",
+                                                                "preparing",
+                                                                "rejected",
+                                                                "cancelled",
+                                                            ].includes(purchaseOrder.status) && (
+                                                                <>
+                                                                    <DropdownMenuSeparator />
+                                                            
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => {
+                                                                            setPurchaseOrderToDelete(
+                                                                                purchaseOrder
+                                                                            );
+                                                                            setDeleteDialogOpen(true);
+                                                                        }}
+                                                                        className="text-red-600 focus:bg-red-50 focus:text-red-700"
+                                                                    >
+                                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                                        Delete
+                                                                    </DropdownMenuItem>
+                                                                </>
+                                                            )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </TableCell>
@@ -1251,6 +1286,29 @@ export default function PurchaseOrderTable({
                 selectedCount={selectedPurchaseOrderIds.length}
                 onConfirm={handleBulkReject}
                 loading={bulkRejectLoading}
+            />
+
+            <DeletePurchaseOrderDialog
+                purchaseOrder={purchaseOrderToDelete}
+                open={deleteDialogOpen}
+                onOpenChange={(open) => {
+                    setDeleteDialogOpen(open);
+                
+                    if (!open) {
+                        setPurchaseOrderToDelete(null);
+                    }
+                }}
+                onDeleted={() => {
+                    toast.add({
+                        title: "Purchase Order Deleted",
+                        description:
+                            "The purchase order was removed from the active list.",
+                        type: "success",
+                    });
+                
+                    setPurchaseOrderToDelete(null);
+                    onUpdated?.();
+                }}
             />
         </div>
     );

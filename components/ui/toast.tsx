@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -19,11 +20,35 @@ import {
 
 const toast = ToastPrimitive.createToastManager();
 
+const TOAST_DURATION = {
+    success: 4000,
+    info: 4000,
+    warning: 5000,
+    error: 6000,
+    loading: Infinity,
+} as const;
+
+function getToastDuration(
+    type: string | undefined
+): number {
+    if (
+        type &&
+        type in TOAST_DURATION
+    ) {
+        return TOAST_DURATION[
+            type as keyof typeof TOAST_DURATION
+        ];
+    }
+
+    return 4000;
+}
+
 function ToastProvider({
     ...props
 }: ToastPrimitive.Provider.Props) {
     return (
         <ToastPrimitive.Provider
+            timeout={4000}
             {...props}
         />
     );
@@ -46,7 +71,7 @@ function ToastViewport({
     return (
         <ToastPrimitive.Viewport
             className={cn(
-                "fixed left-1/2 top-6 z-[100] flex w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 flex-col gap-3 outline-none",
+                "fixed left-1/2 top-4 z-[100] flex w-[calc(100%-2rem)] max-w-[480px] -translate-x-1/2 flex-col gap-3 outline-none sm:top-6",
                 className
             )}
             {...props}
@@ -61,19 +86,26 @@ function Toast({
 }: ToastPrimitive.Root.Props & {
     toast: ToastPrimitive.Root.ToastObject;
 }) {
+    const duration = getToastDuration(
+        toast.type
+    );
+
+    const progressColor =
+        toast.type === "success"
+            ? "bg-emerald-500"
+            : toast.type === "error"
+              ? "bg-red-500"
+              : toast.type === "warning"
+                ? "bg-amber-500"
+                : toast.type === "info"
+                  ? "bg-blue-500"
+                  : "bg-slate-500";
+
     return (
         <ToastPrimitive.Root
             toast={toast}
             className={cn(
-                "group relative flex w-full items-start gap-3 overflow-hidden rounded-xl border bg-white p-4 text-slate-900 shadow-lg",
-                toast.type === "success" &&
-                    "border-emerald-300 ring-1 ring-emerald-200",
-                toast.type === "error" &&
-                    "border-red-300 ring-1 ring-red-200",
-                toast.type === "warning" &&
-                    "border-amber-300 ring-1 ring-amber-200",
-                toast.type === "info" &&
-                    "border-blue-300 ring-1 ring-blue-200",
+                "group relative flex w-full flex-col overflow-hidden rounded-xl bg-white text-slate-900 shadow-[0_6px_18px_rgba(15,23,42,0.12)]",
                 "data-[swipe=cancel]:translate-x-0",
                 "data-[swipe=end]:translate-x-[var(--toast-swipe-end-x)]",
                 "data-[swipe=move]:translate-x-[var(--toast-swipe-move-x)]",
@@ -84,7 +116,46 @@ function Toast({
                 className
             )}
             {...props}
-        />
+        >
+            <div className="flex w-full items-start gap-3 px-5 py-5">
+                <ToastContent>
+                    <ToastIcon
+                        type={toast.type}
+                    />
+
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                        <ToastTitle />
+
+                        <ToastDescription />
+                    </div>
+
+                    <ToastAction />
+
+                    <ToastClose />
+                </ToastContent>
+            </div>
+
+            
+{Number.isFinite(duration) && (
+    <div
+        className="px-6 pb-0"
+        aria-hidden="true"
+    >
+        <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+                className={cn(
+                    "h-full origin-left rounded-full animate-toast-progress",
+                    progressColor
+                )}
+                style={{
+                    animationDuration: `${duration}ms`,
+                }}
+            />
+        </div>
+    </div>
+)}
+
+        </ToastPrimitive.Root>
     );
 }
 
@@ -110,7 +181,7 @@ function ToastTitle({
     return (
         <ToastPrimitive.Title
             className={cn(
-                "text-sm font-semibold text-slate-900",
+                "text-sm font-semibold leading-5 text-slate-900",
                 className
             )}
             {...props}
@@ -162,12 +233,13 @@ function ToastClose({
     return (
         <ToastPrimitive.Close
             className={cn(
-                "shrink-0 rounded-md p-1 text-slate-400 opacity-100 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300",
+                "shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300",
                 className
             )}
             {...props}
         >
             <XIcon className="h-4 w-4" />
+
             <span className="sr-only">
                 Close
             </span>
@@ -180,39 +252,37 @@ function ToastIcon({
 }: {
     type: string | undefined;
 }) {
-    let icon: React.ReactNode = null;
-
     if (type === "success") {
-        icon = (
+        return (
             <CircleCheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
         );
     }
 
     if (type === "info") {
-        icon = (
+        return (
             <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
         );
     }
 
     if (type === "warning") {
-        icon = (
+        return (
             <TriangleAlertIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
         );
     }
 
     if (type === "error") {
-        icon = (
-            <OctagonXIcon className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+        return (
+            <OctagonXIcon className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
         );
     }
 
     if (type === "loading") {
-        icon = (
+        return (
             <Loader2Icon className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-slate-500" />
         );
     }
 
-    return icon;
+    return null;
 }
 
 function ToastList() {
@@ -222,32 +292,12 @@ function ToastList() {
 
     return (
         <>
-            {toasts.map(
-                (toastItem) => (
-                    <Toast
-                        key={toastItem.id}
-                        toast={toastItem}
-                    >
-                        <ToastContent>
-                            <ToastIcon
-                                type={
-                                    toastItem.type
-                                }
-                            />
-
-                            <div className="flex min-w-0 flex-1 flex-col gap-1">
-                                <ToastTitle />
-
-                                <ToastDescription />
-                            </div>
-
-                            <ToastAction />
-
-                            <ToastClose />
-                        </ToastContent>
-                    </Toast>
-                )
-            )}
+            {toasts.map((toastItem) => (
+                <Toast
+                    key={toastItem.id}
+                    toast={toastItem}
+                />
+            ))}
         </>
     );
 }

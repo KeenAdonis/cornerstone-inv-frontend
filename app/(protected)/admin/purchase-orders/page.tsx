@@ -83,21 +83,11 @@ export default function PurchaseOrdersPage() {
                 </div>
             ) : (
                 <PurchaseOrderTable
-                    purchaseOrders={
-                        purchaseOrders
-                    }
-                    onUpdated={
-                        refetch
-                    }
-                    onView={
-                        setSelectedPurchaseOrder
-                    }
-                    onReview={
-                        setReviewPurchaseOrder
-                    }
-                    onViewAttachment={
-                        setAttachmentPurchaseOrder
-                    }
+                    purchaseOrders={purchaseOrders}
+                    onUpdated={refetch}
+                    onView={setSelectedPurchaseOrder}
+                    onReview={setReviewPurchaseOrder}
+                    onViewAttachment={setAttachmentPurchaseOrder}
                 />
             )}
 

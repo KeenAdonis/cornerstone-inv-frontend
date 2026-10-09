@@ -54,7 +54,7 @@ export default function ViewStockAdjustmentDialog({
             open={open}
             onOpenChange={onOpenChange}
         >
-            <DialogContent className="border-blue-100 bg-white text-slate-900 sm:max-w-2xl">
+            <DialogContent className="flex max-h-[90dvh] flex-col overflow-hidden border-blue-100 bg-white text-slate-900 sm:max-w-2xl">
                 <DialogHeader className="border-b border-blue-100 pb-4">
                     <DialogTitle className="text-slate-900">
                         Stock Adjustment Details
@@ -66,7 +66,7 @@ export default function ViewStockAdjustmentDialog({
                 </DialogHeader>
 
                 {stockAdjustment && (
-                    <div className="space-y-5">
+                    <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-1">
                         <div className="rounded-lg border border-blue-100 bg-blue-50/50 px-4 py-4">
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div>
@@ -221,8 +221,8 @@ export default function ViewStockAdjustmentDialog({
                                 </p>
                             </div>
 
-                            <div className="overflow-hidden rounded-lg border border-slate-200">
-                                <table className="w-full text-sm">
+                            <div className="w-full min-w-0 overflow-x-auto rounded-lg border border-slate-200">
+                                <table className="w-full min-w-[600px] text-sm">
                                     <thead>
                                         <tr className="border-b border-blue-100 bg-blue-50">
                                             <th className="px-4 py-3 text-left font-medium text-blue-900">
@@ -302,7 +302,7 @@ export default function ViewStockAdjustmentDialog({
                     </div>
                 )}
 
-                <DialogFooter className="border-t border-blue-100 bg-blue-50/60 pt-5">
+                <DialogFooter className="shrink-0 border-t border-blue-100 bg-blue-50/60 pt-4">
                     <Button
                         type="button"
                         variant="outline"

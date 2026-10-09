@@ -147,7 +147,7 @@ export default function InventoryPage() {
                 <div className="border-b border-slate-200">
                     <TabsList
                         variant="line"
-                        className="h-11 w-full justify-start gap-6 rounded-none bg-transparent p-0 sm:w-fit"
+                        className="h-11 w-full justify-start gap-6 overflow-x-auto overflow-y-hidden rounded-none bg-transparent p-0 sm:w-fit"
                     >
                         <TabsTrigger
                             value="inventory"

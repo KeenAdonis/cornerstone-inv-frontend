@@ -92,20 +92,22 @@ function Toast({
 
     const progressColor =
         toast.type === "success"
-            ? "bg-emerald-500"
+            ? "bg-emerald-400"
             : toast.type === "error"
-              ? "bg-red-500"
+              ? "bg-red-400"
               : toast.type === "warning"
-                ? "bg-amber-500"
+                ? "bg-amber-400"
                 : toast.type === "info"
-                  ? "bg-blue-500"
-                  : "bg-slate-500";
+                  ? "bg-blue-400"
+                  : "bg-slate-400";
 
     return (
         <ToastPrimitive.Root
             toast={toast}
             className={cn(
-                "group relative flex w-full flex-col overflow-hidden rounded-xl bg-white text-slate-900 shadow-[0_6px_18px_rgba(15,23,42,0.12)]",
+                "group relative flex w-full flex-col overflow-hidden rounded-xl",
+                "border border-slate-700/70 bg-slate-900/95 text-slate-50",
+                "shadow-[0_12px_32px_rgba(0,0,0,0.25)] backdrop-blur-xl",
                 "data-[swipe=cancel]:translate-x-0",
                 "data-[swipe=end]:translate-x-[var(--toast-swipe-end-x)]",
                 "data-[swipe=move]:translate-x-[var(--toast-swipe-move-x)]",
@@ -135,26 +137,24 @@ function Toast({
                 </ToastContent>
             </div>
 
-            
-{Number.isFinite(duration) && (
-    <div
-        className="px-6 pb-0"
-        aria-hidden="true"
-    >
-        <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100">
-            <div
-                className={cn(
-                    "h-full origin-left rounded-full animate-toast-progress",
-                    progressColor
-                )}
-                style={{
-                    animationDuration: `${duration}ms`,
-                }}
-            />
-        </div>
-    </div>
-)}
-
+            {Number.isFinite(duration) && (
+                <div
+                    className="px-5 pb-4"
+                    aria-hidden="true"
+                >
+                    <div className="h-1 w-full overflow-hidden rounded-full bg-slate-700/80">
+                        <div
+                            className={cn(
+                                "h-full origin-left rounded-full animate-toast-progress group-hover:[animation-play-state:paused] group-focus-within:[animation-play-state:paused]",
+                                progressColor
+                            )}
+                            style={{
+                                animationDuration: `${duration}ms`,
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
         </ToastPrimitive.Root>
     );
 }
@@ -181,7 +181,7 @@ function ToastTitle({
     return (
         <ToastPrimitive.Title
             className={cn(
-                "text-sm font-semibold leading-5 text-slate-900",
+                "text-sm font-semibold leading-5 text-slate-50",
                 className
             )}
             {...props}
@@ -196,7 +196,7 @@ function ToastDescription({
     return (
         <ToastPrimitive.Description
             className={cn(
-                "text-sm leading-5 text-slate-500",
+                "text-sm leading-5 text-slate-300",
                 className
             )}
             {...props}
@@ -214,7 +214,7 @@ function ToastAction({
                 <Button
                     variant="outline"
                     size="sm"
-                    className="shrink-0"
+                    className="shrink-0 border-slate-600 bg-slate-800 text-slate-100 hover:bg-slate-700 hover:text-white"
                 />
             }
             className={cn(
@@ -233,7 +233,7 @@ function ToastClose({
     return (
         <ToastPrimitive.Close
             className={cn(
-                "shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300",
+                "shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-slate-500",
                 className
             )}
             {...props}
@@ -254,31 +254,31 @@ function ToastIcon({
 }) {
     if (type === "success") {
         return (
-            <CircleCheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+            <CircleCheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
         );
     }
 
     if (type === "info") {
         return (
-            <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+            <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" />
         );
     }
 
     if (type === "warning") {
         return (
-            <TriangleAlertIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+            <TriangleAlertIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
         );
     }
 
     if (type === "error") {
         return (
-            <OctagonXIcon className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+            <OctagonXIcon className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
         );
     }
 
     if (type === "loading") {
         return (
-            <Loader2Icon className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-slate-500" />
+            <Loader2Icon className="mt-0.5 h-5 w-5 shrink-0 animate-spin text-slate-300" />
         );
     }
 
@@ -296,7 +296,23 @@ function ToastList() {
                 <Toast
                     key={toastItem.id}
                     toast={toastItem}
-                />
+                >
+                    <ToastContent>
+                        <ToastIcon
+                            type={toastItem.type}
+                        />
+
+                        <div className="flex min-w-0 flex-1 flex-col gap-1">
+                            <ToastTitle />
+
+                            <ToastDescription />
+                        </div>
+
+                        <ToastAction />
+
+                        <ToastClose />
+                    </ToastContent>
+                </Toast>
             ))}
         </>
     );

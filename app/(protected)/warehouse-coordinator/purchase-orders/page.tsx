@@ -8,11 +8,20 @@ import {
     useReleasePurchaseOrder,
 } from "@/src/hooks/purchase-orders/useReleasePurchaseOrder";
 
+import { useAuth } from "@/src/hooks/useAuth";
+
+import {
+    updatePurchaseOrderTrackingNumber,
+} from "@/src/services/purchaseOrderService";
+
 import type {
     PurchaseOrder,
     ReleasePurchaseOrderPayload,
 } from "@/src/services/purchaseOrderService";
-import { useCompletePurchaseOrder } from "@/src/hooks/purchase-orders/useCompletePurchaseOrder";
+
+import {
+    useCompletePurchaseOrder,
+} from "@/src/hooks/purchase-orders/useCompletePurchaseOrder";
 
 import { toast } from "@/components/ui/toast";
 
@@ -20,6 +29,7 @@ import PurchaseOrderTable from "@/src/components/purchase-orders/PurchaseOrderTa
 import ViewPurchaseOrderDialog from "@/src/components/purchase-orders/ViewPurchaseOrderDialog";
 import ReleasePurchaseOrderDialog from "@/src/components/purchase-orders/ReleasePurchaseOrderDialog";
 import ViewPurchaseOrderAttachmentDialog from "@/src/components/purchase-orders/ViewPurchaseOrderAttachmentDialog";
+import EditTrackingNumberDialog from "@/src/components/purchase-orders/EditTrackingNumberDialog";
 
 export default function PurchaseOrdersPage() {
     const {
@@ -67,6 +77,18 @@ export default function PurchaseOrdersPage() {
     ] = useState<PurchaseOrder | null>(
         null
     );
+
+    const { user } = useAuth();
+
+    const [
+        editingTrackingPurchaseOrder,
+        setEditingTrackingPurchaseOrder,
+    ] = useState<PurchaseOrder | null>(null);
+
+    const [
+        updatingTrackingNumber,
+        setUpdatingTrackingNumber,
+    ] = useState(false);
 
     const handleProcess =
         async () => {
@@ -187,6 +209,50 @@ export default function PurchaseOrdersPage() {
             await refetch();
         };
 
+    const handleUpdateTrackingNumber = async (
+        trackingNumber: string | null
+    ) => {
+        if (!editingTrackingPurchaseOrder) {
+            return;
+        }
+
+        setUpdatingTrackingNumber(true);
+
+        try {
+            const updatedPurchaseOrder =
+                await updatePurchaseOrderTrackingNumber(
+                    editingTrackingPurchaseOrder.id,
+                    trackingNumber
+                );
+
+            toast.add({
+                title: "Tracking Number Updated",
+                description:
+                    "The purchase order tracking number has been updated successfully.",
+                type: "success",
+            });
+
+            setEditingTrackingPurchaseOrder(null);
+
+            setSelectedPurchaseOrder(
+                updatedPurchaseOrder
+            );
+
+            await refetch();
+        } catch (error) {
+            toast.add({
+                title: "Update Failed",
+                description:
+                    error instanceof Error
+                        ? error.message
+                        : "Failed to update tracking number.",
+                type: "error",
+            });
+        } finally {
+            setUpdatingTrackingNumber(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Page Header */}
@@ -265,58 +331,50 @@ export default function PurchaseOrdersPage() {
                     }
                 />
             )}
-
+            
             {/* Purchase Order Details */}
             <ViewPurchaseOrderDialog
                 purchaseOrder={
                     selectedPurchaseOrder
                 }
                 open={
-                    selectedPurchaseOrder !==
-                    null
+                    selectedPurchaseOrder !== null
                 }
                 showPrint={true}
                 onOpenChange={(
                     open
                 ) => {
                     if (!open) {
-                        setSelectedPurchaseOrder(
-                            null
-                        );
+                        setSelectedPurchaseOrder(null);
                     }
                 }}
-                onProcess={
-                    handleProcess
+                onEditTrackingNumber={
+                    user?.role === "warehouse_coordinator" &&
+                    selectedPurchaseOrder?.status === "out_for_delivery"
+                        ? () => {
+                              if (!selectedPurchaseOrder) {
+                                  return;
+                              }
+
+                              setEditingTrackingPurchaseOrder(
+                                  selectedPurchaseOrder
+                              );
+                          }
+                        : undefined
                 }
-                processing={
-                    processing
-                }
-                onRelease={
-                    handleReleaseRequest
-                }
-                releasing={
-                    releasing
-                }
-                onComplete={
-                    handleComplete
-                }
-                completing={
-                    completing
-                }
+                onProcess={handleProcess}
+                processing={processing}
+                onRelease={handleReleaseRequest}
+                releasing={releasing}
+                onComplete={handleComplete}
+                completing={completing}
             />
 
             {/* Release Purchase Order */}
             <ReleasePurchaseOrderDialog
-                purchaseOrder={
-                    releasePurchaseOrder
-                }
-                open={
-                    releasePurchaseOrder !==
-                    null
-                }
-                loading={
-                    releasing
-                }
+                purchaseOrder={releasePurchaseOrder}
+                open={releasePurchaseOrder !== null}
+                loading={releasing}
                 onOpenChange={(
                     open
                 ) => {
@@ -326,20 +384,25 @@ export default function PurchaseOrdersPage() {
                         );
                     }
                 }}
-                onSubmit={
-                    handleRelease
-                }
+                onSubmit={handleRelease}
+            />
+
+            <EditTrackingNumberDialog
+                purchaseOrder={editingTrackingPurchaseOrder}
+                open={editingTrackingPurchaseOrder !== null}
+                loading={updatingTrackingNumber}
+                onOpenChange={(open) => {
+                    if (!open && !updatingTrackingNumber) {
+                        setEditingTrackingPurchaseOrder(null);
+                    }
+                }}
+                onSubmit={handleUpdateTrackingNumber}
             />
 
             {/* View Purchase Order Attachment */}
             <ViewPurchaseOrderAttachmentDialog
-                purchaseOrder={
-                    attachmentPurchaseOrder
-                }
-                open={
-                    attachmentPurchaseOrder !==
-                    null
-                }
+                purchaseOrder={attachmentPurchaseOrder}
+                open={attachmentPurchaseOrder !== null}
                 onOpenChange={(
                     open
                 ) => {

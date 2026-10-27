@@ -20,6 +20,7 @@ export interface PurchaseOrderFilters {
     warehouseId?: number;
 }
 
+
 export interface PurchaseOrderItem {
     id: number;
     purchase_order_id: number;
@@ -34,6 +35,7 @@ export interface PurchaseOrderItem {
         sku: string;
         unit: string;
         srp: string;
+        image_url: string | null;
     };
 }
 
@@ -476,6 +478,81 @@ export async function releasePurchaseOrder(
         data as PurchaseOrderResponse
     ).data.purchase_order;
 }
+
+
+/**
+ * Updates the tracking number of a purchase order
+ * that is currently out for delivery.
+ */
+export async function updatePurchaseOrderTrackingNumber(
+    purchaseOrderId: number,
+    trackingNumber: string | null
+): Promise<PurchaseOrder> {
+    const csrfResponse = await fetch(
+        `${API_ORIGIN}/sanctum/csrf-cookie`,
+        {
+            method: "GET",
+            credentials: "include",
+        }
+    );
+
+    if (!csrfResponse.ok) {
+        throw new Error(
+            "Failed to initialize secure request."
+        );
+    }
+
+    const xsrfToken = getXsrfToken();
+
+    if (!xsrfToken) {
+        throw new Error(
+            "Unable to initialize CSRF protection."
+        );
+    }
+
+    const response = await fetch(
+        `${API_BASE_URL}/purchase-orders/${purchaseOrderId}/tracking-number`,
+        {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "X-XSRF-TOKEN": xsrfToken,
+            },
+            body: JSON.stringify({
+                tracking_number: trackingNumber?.trim() || null,
+            }),
+        }
+    );
+
+    const data:
+        | PurchaseOrderResponse
+        | {
+              message?: string;
+              errors?: Record<string, string[]>;
+          } = await response.json();
+
+    if (!response.ok) {
+        const validationMessage =
+            "errors" in data && data.errors
+                ? Object.values(data.errors)
+                      .flat()
+                      .find(Boolean)
+                : undefined;
+
+        throw new Error(
+            validationMessage ??
+                data.message ??
+                "Failed to update tracking number."
+        );
+    }
+
+    return (
+        data as PurchaseOrderResponse
+    ).data.purchase_order;
+}
+
 
 /**
  * Marks an out-for-delivery purchase order

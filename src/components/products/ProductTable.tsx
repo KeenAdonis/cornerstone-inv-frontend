@@ -21,6 +21,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+
+import {
     Table,
     TableBody,
     TableCell,
@@ -242,12 +248,8 @@ export default function ProductTable({
                     <Table>
                         <TableHeader>
                             <TableRow className="border-blue-100 bg-blue-50 hover:bg-blue-50">
-                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
-                                    Product Name
-                                </TableHead>
-
-                                <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
-                                    Product Code
+                                <TableHead className="min-w-[280px] whitespace-nowrap text-xs font-semibold text-blue-900">
+                                    Product
                                 </TableHead>
 
                                 <TableHead className="whitespace-nowrap text-xs font-semibold text-blue-900">
@@ -285,14 +287,74 @@ export default function ProductTable({
                                         }
                                         className="border-slate-200 hover:bg-slate-50"
                                     >
-                                        <TableCell className="font-medium text-slate-900">
-                                            {
-                                                product.name
-                                            }
-                                        </TableCell>
-
-                                        <TableCell className="text-slate-600">
-                                            {product.product_code ?? "—"}
+                                        <TableCell>
+                                            <div className="flex min-w-[240px] items-center gap-3">
+                                                <Popover>
+                                                    <PopoverTrigger
+                                                        render={
+                                                            <button
+                                                                type="button"
+                                                                className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 transition hover:border-blue-300 hover:ring-2 hover:ring-blue-100"
+                                                                aria-label={`Preview ${product.name}`}
+                                                            />
+                                                        }
+                                                    >
+                                                        {product.image_url ? (
+                                                            <img
+                                                                src={product.image_url}
+                                                                alt={product.name}
+                                                                className="h-full w-full object-contain"
+                                                            />
+                                                        ) : (
+                                                            <span className="text-[8px] text-slate-400">
+                                                                No image
+                                                            </span>
+                                                        )}
+                                                    </PopoverTrigger>
+                                                    
+                                                    <PopoverContent
+                                                        side="right"
+                                                        align="center"
+                                                        sideOffset={12}
+                                                        className="w-72 border border-slate-200 bg-white p-3 shadow-xl"
+                                                    >
+                                                        <div className="flex h-52 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50">
+                                                            {product.image_url ? (
+                                                                <img
+                                                                    src={product.image_url}
+                                                                    alt={product.name}
+                                                                    className="h-full w-full object-contain"
+                                                                />
+                                                            ) : (
+                                                                <span className="text-sm text-slate-400">
+                                                                    No image available
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        <div className="space-y-1 pt-1">
+                                                            <p className="font-semibold text-slate-900">
+                                                                {product.name}
+                                                            </p>
+                                                        
+                                                            <p className="text-xs text-slate-500">
+                                                                Product Code: {product.product_code ?? "—"}
+                                                            </p>
+                                                        </div>
+                                                    </PopoverContent>
+                                                </Popover>
+                                                        
+                                                {/* Product Name and Code — keep these outside the Popover */}
+                                                <div className="min-w-0">
+                                                    <p className="truncate font-medium text-slate-900">
+                                                        {product.name}
+                                                    </p>
+                                                        
+                                                    <p className="mt-1 text-xs text-slate-500">
+                                                        Code: {product.product_code ?? "—"}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </TableCell>
 
                                         <TableCell className="text-slate-600">

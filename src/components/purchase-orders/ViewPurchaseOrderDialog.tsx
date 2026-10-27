@@ -11,12 +11,19 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+
 import { Button } from "@/components/ui/button";
 
 import {
     BadgeCheck,
     CalendarDays,
     PackageCheck,
+    Pencil,
     Printer,
     Truck,
 } from "lucide-react";
@@ -27,6 +34,7 @@ import type {
 
 import PurchaseOrderPrintView from "@/src/components/purchase-orders/PurchaseOrderPrintView";
 import PurchaseOrderDeliveryReceiptPrintView from "@/src/components/purchase-orders/PurchaseOrderDeliveryReceiptPrintView";
+import EditTrackingNumberDialog from "@/src/components/purchase-orders/EditTrackingNumberDialog";
 
 interface ViewPurchaseOrderDialogProps {
     purchaseOrder: PurchaseOrder | null;
@@ -43,6 +51,8 @@ interface ViewPurchaseOrderDialogProps {
     completing?: boolean;
 
     showPrint?: boolean;
+
+    onEditTrackingNumber?: () => void;
 }
 
 type PrintMode =
@@ -190,6 +200,7 @@ export default function ViewPurchaseOrderDialog({
     onComplete,
     completing = false,
     showPrint = false,
+    onEditTrackingNumber,
 }: ViewPurchaseOrderDialogProps) {
     const [
         printMode,
@@ -519,11 +530,67 @@ export default function ViewPurchaseOrderDialog({
                                                         }
                                                         className="border-b border-slate-200 last:border-b-0"
                                                     >
+                                                        
                                                         <td className="px-4 py-3 font-medium text-slate-800">
-                                                            {item
-                                                                .product
-                                                                ?.name ??
-                                                                "—"}
+                                                            <div className="flex items-center gap-3">
+                                                                <Popover>
+                                                                    <PopoverTrigger
+                                                                        render={
+                                                                            <button
+                                                                                type="button"
+                                                                                className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 transition hover:border-blue-300 hover:ring-2 hover:ring-blue-100"
+                                                                                aria-label={`Preview ${item.product?.name ?? "product"} image`}
+                                                                            />
+                                                                        }
+                                                                    >
+                                                                        {item.product?.image_url ? (
+                                                                            <img
+                                                                                src={item.product.image_url}
+                                                                                alt={item.product.name}
+                                                                                className="h-full w-full object-contain"
+                                                                            />
+                                                                        ) : (
+                                                                            <span className="text-[9px] font-normal text-slate-400">
+                                                                                No image
+                                                                            </span>
+                                                                        )}
+                                                                    </PopoverTrigger>
+                                                                    
+                                                                    <PopoverContent
+                                                                        side="right"
+                                                                        align="center"
+                                                                        sideOffset={12}
+                                                                        className="w-72 border border-slate-200 bg-white p-3 shadow-xl"
+                                                                    >
+                                                                        <div className="flex h-52 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50">
+                                                                            {item.product?.image_url ? (
+                                                                                <img
+                                                                                    src={item.product.image_url}
+                                                                                    alt={item.product.name}
+                                                                                    className="h-full w-full object-contain"
+                                                                                />
+                                                                            ) : (
+                                                                                <span className="text-sm text-slate-400">
+                                                                                    No image available
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        
+                                                                        <div className="space-y-1 pt-2">
+                                                                            <p className="font-semibold text-slate-900">
+                                                                                {item.product?.name ?? "—"}
+                                                                            </p>
+                                                                            <p className="text-xs text-slate-500">
+                                                                                SKU: {item.product?.sku ?? "—"}
+                                                                            </p>
+                                                                        </div>
+                                                                    </PopoverContent>
+                                                                </Popover>
+                                                                        
+                                                                <span>
+                                                                    {item.product?.name ?? "—"}
+                                                                </span>
+                                                            </div>
                                                         </td>
 
                                                         <td className="px-4 py-3 font-mono text-xs text-slate-600">
@@ -541,9 +608,9 @@ export default function ViewPurchaseOrderDialog({
                                                         </td>
 
                                                         <td className="px-4 py-3 text-right font-medium text-slate-800">
-                                                            {
-                                                                item.quantity
-                                                            }
+                                                            {Number(item.quantity).toLocaleString("en-PH", {
+                                                                maximumFractionDigits: 2,
+                                                            })}
                                                         </td>
                                                     </tr>
                                                 )
@@ -579,17 +646,32 @@ export default function ViewPurchaseOrderDialog({
                                                 purchaseOrder.delivery_type
                                             )}
                                         </p>
-                                    </div>
-                                        
+                                    </div>                         
+                                    
                                     {/* Tracking Number */}
                                     <div>
                                         <p className="text-xs text-slate-500">
                                             Tracking Number
                                         </p>
-                                        
-                                        <p className="mt-1 break-all text-sm font-medium text-slate-800">
-                                            {purchaseOrder.tracking_number || "—"}
-                                        </p>
+
+                                        <div className="mt-1 flex items-center gap-2">
+                                            <p className="break-all text-sm font-medium text-slate-800">
+                                                {purchaseOrder.tracking_number || "—"}
+                                            </p>
+
+                                            {purchaseOrder.status === "out_for_delivery" &&
+                                                onEditTrackingNumber && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={onEditTrackingNumber}
+                                                        aria-label="Edit tracking number"
+                                                        title="Edit tracking number"
+                                                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-blue-50 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                                    >
+                                                        <Pencil className="h-3.5 w-3.5" />
+                                                    </button>
+                                                )}
+                                        </div>
                                     </div>
                                         
                                     {/* Ship Out Date */}

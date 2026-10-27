@@ -1,6 +1,7 @@
 "use client";
 
 import {
+    ChangeEvent,
     FormEvent,
     useEffect,
     useState,
@@ -79,6 +80,12 @@ export default function EditProductDialog({
     const [formData, setFormData] =
         useState<ProductFormData>(emptyFormData);
 
+    const [selectedImage, setSelectedImage] =
+        useState<File | null>(null);
+
+    const [imagePreview, setImagePreview] =
+        useState<string | null>(null);
+
     const {
         update,
         loading,
@@ -88,6 +95,7 @@ export default function EditProductDialog({
     useEffect(() => {
         if (!product) {
             setFormData(emptyFormData);
+            clearSelectedImage();
             return;
         }
 
@@ -97,10 +105,12 @@ export default function EditProductDialog({
             name: product.name,
             sku: product.sku,
             unit: product.unit,
-            srp: product.srp,
+            srp: String(product.srp),
             description: product.description ?? "",
             status: product.status,
         });
+
+        clearSelectedImage();
     }, [product]);
 
     const handleSubmit = async (
@@ -133,6 +143,7 @@ export default function EditProductDialog({
                 undefined,
             status:
                 formData.status as UpdateProductData["status"],
+            image: selectedImage ?? undefined,
         };
 
         const response = await update(
@@ -156,10 +167,70 @@ export default function EditProductDialog({
         onOpenChange(false);
     };
 
+    const handleImageChange = (
+        event: ChangeEvent<HTMLInputElement>
+    ) => {
+        const file = event.target.files?.[0];
+
+        if (!file) return;
+
+        if (
+            ![
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+            ].includes(file.type)
+        ) {
+            toast.add({
+                title: "Invalid Image",
+                description:
+                    "Choose a JPG, PNG, or WebP image.",
+                type: "error",
+            });
+
+            event.target.value = "";
+            return;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            toast.add({
+                title: "Image Too Large",
+                description:
+                    "The image must not exceed 2 MB.",
+                type: "error",
+            });
+
+            event.target.value = "";
+            return;
+        }
+
+        if (imagePreview) {
+            URL.revokeObjectURL(imagePreview);
+        }
+
+        setSelectedImage(file);
+        setImagePreview(URL.createObjectURL(file));
+    };
+
+    const clearSelectedImage = () => {
+        if (imagePreview) {
+            URL.revokeObjectURL(imagePreview);
+        }
+
+        setSelectedImage(null);
+        setImagePreview(null);
+    };
+
     return (
         <Dialog
             open={open}
-            onOpenChange={onOpenChange}
+            onOpenChange={(value) => {
+                if (!value && !loading) {
+                    clearSelectedImage();
+                }
+            
+                onOpenChange(value);
+            }}
         >
             <DialogContent className="flex max-h-[94vh] flex-col border-blue-100 bg-white text-slate-900 sm:max-w-xl">
                 <DialogHeader className="shrink-0 border-b border-blue-100 pb-4">
@@ -256,6 +327,65 @@ export default function EditProductDialog({
                                 disabled={loading}
                                 className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus-visible:border-blue-400 focus-visible:ring-blue-100"
                             />
+                        </div>
+
+                        {/* Product Image */}
+                        <div className="space-y-2">
+                            <label
+                                htmlFor="edit-product-image"
+                                className="text-sm font-medium text-slate-700"
+                            >
+                                Product Image
+                            </label>
+
+                            <div className="flex flex-col gap-4 rounded-lg border border-dashed border-slate-300 p-4 sm:flex-row sm:items-center">
+                                <div className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                                    {imagePreview || product?.image_url ? (
+                                        <img
+                                            src={imagePreview ?? product?.image_url ?? ""}
+                                            alt="Product preview"
+                                            className="h-full w-full object-contain"
+                                        />
+                                    ) : (
+                                        <span className="px-2 text-center text-xs text-slate-400">
+                                            No image available
+                                        </span>
+                                    )}
+                                </div>
+                                
+                                <div className="min-w-0 flex-1 space-y-2">
+                                    <Input
+                                        id="edit-product-image"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        onChange={handleImageChange}
+                                        disabled={loading}
+                                        className="border-slate-200 bg-white text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-blue-50 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700"
+                                    />
+
+                                    <p className="text-xs text-slate-500">
+                                        JPG, PNG, or WebP. Maximum size: 2 MB.
+                                    </p>
+                                
+                                    {selectedImage && (
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="truncate text-xs text-slate-600">
+                                                {selectedImage.name}
+                                            </p>
+                                    
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={clearSelectedImage}
+                                                disabled={loading}
+                                            >
+                                                Remove
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Product Code and SKU */}

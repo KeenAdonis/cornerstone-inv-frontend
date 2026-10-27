@@ -17,6 +17,8 @@ export interface Product {
     unit: string;
     srp: string;
     description: string | null;
+    image_path: string | null;
+    image_url: string | null;
     status: "active" | "inactive";
     category: ProductCategory;
 }
@@ -29,6 +31,7 @@ export interface CreateProductData {
     unit: string;
     srp: number;
     description?: string;
+    image?: File | null;
     status?: "active" | "inactive";
 }
 
@@ -40,6 +43,7 @@ export interface UpdateProductData {
     unit: string;
     srp: number;
     description?: string;
+    image?: File | null;
     status?: "active" | "inactive";
 }
 
@@ -79,6 +83,29 @@ function getXsrfToken(): string | null {
     );
 }
 
+function buildProductFormData(
+    productData: CreateProductData | UpdateProductData
+): FormData {
+    const formData = new FormData();
+
+    Object.entries(productData).forEach(([key, value]) => {
+        if (key === "image") {
+            if (value instanceof File) {
+                formData.append("image", value);
+            }
+
+            return;
+        }
+
+        if (value !== undefined && value !== null) {
+            formData.append(key, String(value));
+        }
+    });
+
+    return formData;
+}
+
+
 /**
  * Gets all products.
  */
@@ -117,12 +144,10 @@ export async function createProduct(
             method: "POST",
             credentials: "include",
             headers: {
-                "Content-Type": "application/json",
                 Accept: "application/json",
-                "X-XSRF-TOKEN":
-                    getXsrfToken() ?? "",
+                "X-XSRF-TOKEN": getXsrfToken() ?? "",
             },
-            body: JSON.stringify(productData),
+            body: buildProductFormData(productData),
         }
     );
 
@@ -149,15 +174,17 @@ export async function updateProduct(
     const response = await fetch(
         `${API_BASE_URL}/products/${productId}`,
         {
-            method: "PUT",
+            method: "POST",
             credentials: "include",
             headers: {
-                "Content-Type": "application/json",
                 Accept: "application/json",
-                "X-XSRF-TOKEN":
-                    getXsrfToken() ?? "",
+                "X-XSRF-TOKEN": getXsrfToken() ?? "",
             },
-            body: JSON.stringify(productData),
+            body: (() => {
+                const formData = buildProductFormData(productData);
+                formData.append("_method", "PUT");
+                return formData;
+            })(),
         }
     );
 

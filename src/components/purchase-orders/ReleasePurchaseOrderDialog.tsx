@@ -119,17 +119,6 @@ export default function ReleasePurchaseOrderDialog({
             return;
         }
 
-        if (
-            deliveryType !== "in_house" &&
-            !trackingNumber.trim()
-        ) {
-            setValidationError(
-                "Please enter the tracking number."
-            );
-
-            return;
-        }
-
         if (!shipOutDate) {
             setValidationError(
                 "Please select the ship out date."
@@ -301,9 +290,8 @@ export default function ReleasePurchaseOrderDialog({
                                         className="text-sm font-medium text-slate-700"
                                     >
                                         Tracking Number
-
-                                        <span className="ml-1 text-red-500">
-                                            *
+                                        <span className="ml-1 text-xs font-normal text-slate-400">
+                                            (Optional)
                                         </span>
                                     </label>
 

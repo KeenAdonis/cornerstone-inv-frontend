@@ -6,6 +6,8 @@ import {
 export interface InventoryProduct {
     id: number;
     name: string;
+    product_code: string | null;
+    image_url: string | null;
     sku: string;
     unit: string;
     srp: string;

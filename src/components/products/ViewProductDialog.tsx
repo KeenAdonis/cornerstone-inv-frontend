@@ -48,7 +48,7 @@ export default function ViewProductDialog({
             open={open}
             onOpenChange={onOpenChange}
         >
-            <DialogContent className="border-blue-100 bg-white text-slate-900 sm:max-w-lg">
+            <DialogContent className="flex max-h-[90dvh] flex-col overflow-hidden border-blue-100 bg-white text-slate-900 sm:max-w-lg">
                 <DialogHeader className="border-b border-blue-100 pb-4">
                     <DialogTitle className="text-slate-900">
                         Product Details
@@ -60,7 +60,23 @@ export default function ViewProductDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-3">
+                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain py-1 pr-1">
+                    <div className="flex justify-center">
+                        <div className="flex h-48 w-full max-w-xs items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                            {product.image_url ? (
+                                <img
+                                    src={product.image_url}
+                                    alt={product.name}
+                                    className="h-full w-full object-contain p-3"
+                                />
+                            ) : (
+                                <div className="text-center text-sm text-slate-400">
+                                    No product image available
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Product Name */}
                     <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-4">
                         <p className="text-xs font-medium uppercase tracking-wide text-slate-500">

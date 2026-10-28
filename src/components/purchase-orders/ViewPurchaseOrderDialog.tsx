@@ -266,7 +266,10 @@ export default function ViewPurchaseOrderDialog({
     
     const showRejectAction =
         onReject &&
-        purchaseOrder.status === "out_for_delivery";
+        (
+            purchaseOrder.status === "out_for_delivery" ||
+            purchaseOrder.status === "delivered"
+        );
 
     const showDeliveryReceipt =
         [

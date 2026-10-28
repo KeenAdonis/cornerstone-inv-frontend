@@ -371,8 +371,10 @@ export default function PurchaseOrdersPage() {
                 }
 
                 onReject={
-                    user?.role === "warehouse_coordinator" &&
-                    selectedPurchaseOrder?.status === "out_for_delivery"
+                    (
+                        selectedPurchaseOrder?.status === "out_for_delivery" ||
+                        selectedPurchaseOrder?.status === "delivered"
+                    )
                         ? () => {
                               if (!selectedPurchaseOrder) {
                                   return;

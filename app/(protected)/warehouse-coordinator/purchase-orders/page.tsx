@@ -30,6 +30,7 @@ import ViewPurchaseOrderDialog from "@/src/components/purchase-orders/ViewPurcha
 import ReleasePurchaseOrderDialog from "@/src/components/purchase-orders/ReleasePurchaseOrderDialog";
 import ViewPurchaseOrderAttachmentDialog from "@/src/components/purchase-orders/ViewPurchaseOrderAttachmentDialog";
 import EditTrackingNumberDialog from "@/src/components/purchase-orders/EditTrackingNumberDialog";
+import RejectPurchaseOrderDuringDeliveryDialog from "@/src/components/warehouse-coordinator/purchase-order/RejectPurchaseOrderDuringDeliveryDialog";
 
 export default function PurchaseOrdersPage() {
     const {
@@ -89,6 +90,11 @@ export default function PurchaseOrdersPage() {
         updatingTrackingNumber,
         setUpdatingTrackingNumber,
     ] = useState(false);
+
+    const [
+        rejectingPurchaseOrder,
+        setRejectingPurchaseOrder,
+    ] = useState<PurchaseOrder | null>(null);
 
     const handleProcess =
         async () => {
@@ -348,6 +354,7 @@ export default function PurchaseOrdersPage() {
                         setSelectedPurchaseOrder(null);
                     }
                 }}
+
                 onEditTrackingNumber={
                     user?.role === "warehouse_coordinator" &&
                     selectedPurchaseOrder?.status === "out_for_delivery"
@@ -362,6 +369,22 @@ export default function PurchaseOrdersPage() {
                           }
                         : undefined
                 }
+
+                onReject={
+                    user?.role === "warehouse_coordinator" &&
+                    selectedPurchaseOrder?.status === "out_for_delivery"
+                        ? () => {
+                              if (!selectedPurchaseOrder) {
+                                  return;
+                              }
+                          
+                              setRejectingPurchaseOrder(
+                                  selectedPurchaseOrder
+                              );
+                          }
+                        : undefined
+                }
+
                 onProcess={handleProcess}
                 processing={processing}
                 onRelease={handleReleaseRequest}
@@ -397,6 +420,28 @@ export default function PurchaseOrdersPage() {
                     }
                 }}
                 onSubmit={handleUpdateTrackingNumber}
+            />
+     
+            <RejectPurchaseOrderDuringDeliveryDialog
+                purchaseOrder={rejectingPurchaseOrder}
+                open={rejectingPurchaseOrder !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setRejectingPurchaseOrder(null);
+                    }
+                }}
+                onRejected={async (updatedPurchaseOrder) => {
+                    setRejectingPurchaseOrder(null);
+                
+                    if (
+                        selectedPurchaseOrder?.id ===
+                        updatedPurchaseOrder.id
+                    ) {
+                        setSelectedPurchaseOrder(null);
+                    }
+                
+                    await refetch();
+                }}
             />
 
             {/* View Purchase Order Attachment */}

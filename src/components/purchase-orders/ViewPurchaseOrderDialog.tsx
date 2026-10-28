@@ -53,6 +53,9 @@ interface ViewPurchaseOrderDialogProps {
     showPrint?: boolean;
 
     onEditTrackingNumber?: () => void;
+
+    onReject?: () => void;
+    rejecting?: boolean;
 }
 
 type PrintMode =
@@ -201,6 +204,8 @@ export default function ViewPurchaseOrderDialog({
     completing = false,
     showPrint = false,
     onEditTrackingNumber,
+    onReject,
+    rejecting = false,
 }: ViewPurchaseOrderDialogProps) {
     const [
         printMode,
@@ -258,6 +263,10 @@ export default function ViewPurchaseOrderDialog({
         onComplete &&
         purchaseOrder.status ===
             "delivered";
+    
+    const showRejectAction =
+        onReject &&
+        purchaseOrder.status === "out_for_delivery";
 
     const showDeliveryReceipt =
         [
@@ -823,6 +832,18 @@ export default function ViewPurchaseOrderDialog({
                                 {releasing
                                     ? "Releasing..."
                                     : "Out for Delivery"}
+                            </Button>
+                        )}
+   
+                        {showRejectAction && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={onReject}
+                                disabled={actionLoading || rejecting}
+                                className="rounded-sm border-red-200 bg-white text-red-700 hover:bg-red-50"
+                            >
+                                {rejecting ? "Rejecting..." : "Reject Purchase Order"}
                             </Button>
                         )}
 

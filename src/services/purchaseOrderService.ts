@@ -554,6 +554,75 @@ export async function updatePurchaseOrderTrackingNumber(
 }
 
 
+export async function rejectPurchaseOrderDuringDelivery(
+    purchaseOrderId: number,
+    rejectionReason: string
+): Promise<PurchaseOrder> {
+    const csrfResponse = await fetch(
+        `${API_ORIGIN}/sanctum/csrf-cookie`,
+        {
+            method: "GET",
+            credentials: "include",
+        }
+    );
+
+    if (!csrfResponse.ok) {
+        throw new Error(
+            "Failed to initialize secure request."
+        );
+    }
+
+    const xsrfToken = getXsrfToken();
+
+    if (!xsrfToken) {
+        throw new Error(
+            "Unable to initialize CSRF protection."
+        );
+    }
+
+    const response = await fetch(
+        `${API_BASE_URL}/purchase-orders/${purchaseOrderId}/reject`,
+        {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "X-XSRF-TOKEN": xsrfToken,
+            },
+            body: JSON.stringify({
+                rejection_reason: rejectionReason.trim(),
+            }),
+        }
+    );
+
+    const data:
+        | PurchaseOrderResponse
+        | {
+              message?: string;
+              errors?: Record<string, string[]>;
+          } = await response.json();
+
+    if (!response.ok) {
+        const validationMessage =
+            "errors" in data && data.errors
+                ? Object.values(data.errors)
+                      .flat()
+                      .find(Boolean)
+                : undefined;
+
+        throw new Error(
+            validationMessage ??
+                data.message ??
+                "Failed to reject purchase order."
+        );
+    }
+
+    return (
+        data as PurchaseOrderResponse
+    ).data.purchase_order;
+}
+
 /**
  * Marks an out-for-delivery purchase order
  * as delivered and uploads its proof of delivery.
